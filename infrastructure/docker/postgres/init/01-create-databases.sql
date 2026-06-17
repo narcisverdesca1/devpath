@@ -1,0 +1,1 @@
+CREATE DATABASE devpath_note;

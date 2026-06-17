@@ -1,0 +1,19 @@
+services:
+  devpath-postgres:
+    image: postgres:17
+    container_name: devpath-postgres
+
+    environment:
+      POSTGRES_DB: devpath_learning
+      POSTGRES_USER: devpath_user
+      POSTGRES_PASSWORD: devpath_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - devpath_postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+
+volumes:
+  devpath_postgres_data:
