@@ -8,9 +8,11 @@ Current implementation includes:
 
 * Course domain model
 * Module domain model
+* Course CRUD operations
+* Module CRUD operations
 * PostgreSQL persistence
 * Spring Data JPA integration
-* CRUD operations for Course
+* Course → Module relationship
 
 ---
 
@@ -40,26 +42,27 @@ Fields:
 
 ## Relationships
 
-Course 1 --- N Module
+### Course (1) → (N) Module
 
-JPA Mapping:
+The Learning Service currently models a one-to-many relationship between Course and Module.
 
-Course
+### Course Mapping
 
 ```java
 @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
 private List<Module> modules;
 ```
 
-Module
+### Module Mapping
 
 ```java
 @ManyToOne
 @JoinColumn(name = "course_id")
+@JsonIgnore
 private Course course;
 ```
 
-Generated Foreign Key:
+Generated foreign key:
 
 ```text
 module.course_id -> course.id
@@ -77,7 +80,7 @@ devpath_learning
 
 Hibernate configuration:
 
-```text
+```properties
 spring.jpa.hibernate.ddl-auto=update
 ```
 
@@ -88,7 +91,7 @@ course
 module
 ```
 
-Verified through PostgreSQL inspection.
+Persistence was verified through PostgreSQL inspection.
 
 ---
 
@@ -97,47 +100,40 @@ Verified through PostgreSQL inspection.
 ### Repository
 
 * CourseRepository
+* ModuleRepository
 
 ### Service
 
 * CourseService
+* ModuleService
 
 ### Controller
 
 * CourseController
+* ModuleController
 
 ---
 
 ## Implemented Endpoints
 
-### Create Course
+### Course Management
 
 ```http
-POST /courses
-```
-
-### Get All Courses
-
-```http
-GET /courses
-```
-
-### Get Course By Id
-
-```http
-GET /courses/{id}
-```
-
-### Update Course
-
-```http
-PUT /courses/{id}
-```
-
-### Delete Course
-
-```http
+POST   /courses
+GET    /courses
+GET    /courses/{id}
+PUT    /courses/{id}
 DELETE /courses/{id}
+```
+
+### Module Management
+
+```http
+POST   /courses/{courseId}/modules
+GET    /courses/{courseId}/modules
+GET    /modules/{id}
+PUT    /modules/{id}
+DELETE /modules/{id}
 ```
 
 ---
@@ -154,9 +150,84 @@ Verified successfully:
 * Service layer
 * REST controller layer
 * Postman testing
-* CRUD operations
+* Course CRUD operations
+* Module CRUD operations
+* Course → Module relationship
 * Foreign key generation
+* Relationship persistence in PostgreSQL
+
+---
+
+## Lessons Learned
+
+### Bidirectional JPA Relationships
+
+The Course ↔ Module relationship was implemented using:
+
+```java
+@OneToMany
+@ManyToOne
+```
+
+This allows a Course to contain multiple Modules while each Module belongs to one Course.
+
+### JSON Serialization Issue
+
+The bidirectional relationship initially caused an infinite JSON serialization loop:
+
+```text
+Course
+└── modules
+    └── course
+        └── modules
+            └── course
+                ...
+```
+
+The issue was solved by applying:
+
+```java
+@JsonIgnore
+```
+
+on the `course` field inside the Module entity:
+
+```java
+@JsonIgnore
+private Course course;
+```
+
+### Future Improvements
+
+* DTO Pattern
+* Dedicated API response models
+* Global Exception Handling
+* Validation with Bean Validation
+* Swagger / OpenAPI documentation
+
+---
+
+## Current Status
+
+Learning Service is fully operational and registered in Eureka.
+
+Implemented features:
+
+* Course CRUD
+* Module CRUD
+* Course → Module relationship
+* PostgreSQL persistence
+* JPA/Hibernate integration
 
 Status:
 
-READY FOR MODULE CRUD IMPLEMENTATION
+```text
+MODULE CRUD IMPLEMENTATION COMPLETED
+```
+
+Ready for:
+
+* Validation Layer
+* Global Exception Handling
+* DTO Introduction
+* API Documentation
