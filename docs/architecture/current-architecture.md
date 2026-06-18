@@ -11,25 +11,45 @@ Databases:
 
 ## Services
 
-Naming Server
+### Naming Server
 
-Port:
-8761
+Port: 8761
 
 Technology:
 
 * Spring Boot
 * Eureka Server
 
-API Gateway
+### API Gateway
 
-Port:
-8765
+Port: 8765
 
 Technology:
 
 * Spring Cloud Gateway
 * Eureka Discovery Client
+
+### Learning Service
+
+Port: 8081
+
+Technology:
+
+* Spring Boot
+* Spring Web
+* Spring Data JPA
+* PostgreSQL
+* Eureka Discovery Client
+
+Database:
+
+* devpath_learning
+
+Status:
+
+* Registered in Eureka
+* Connected to PostgreSQL
+* Actuator enabled
 
 ## Current Topology
 
@@ -38,17 +58,16 @@ Technology:
             localhost:8761
                    ▲
                    │
-            API Gateway
-            localhost:8765
+    ┌──────────────┴──────────────┐
+    │                             │
+```
 
+API Gateway                 Learning Service
+localhost:8765              localhost:8081
+
+```
             PostgreSQL
             localhost:5432
              ├─ devpath_learning
              └─ devpath_note
 ```
-
-## Planned Services
-
-* learning-service
-* note-service
-* auth-service
