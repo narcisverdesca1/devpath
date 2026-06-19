@@ -68,6 +68,8 @@ Technology:
 * Spring Data JPA
 * PostgreSQL
 * Eureka Discovery Client
+* Jakarta Bean Validation
+* MapStruct
 
 Database:
 
@@ -75,7 +77,7 @@ Database:
 devpath_learning
 ```
 
-Current Domain:
+Domain Model:
 
 ```text
 Course
@@ -89,6 +91,10 @@ Implemented Features:
 * Course → Module relationship
 * Hibernate automatic schema generation
 * PostgreSQL persistence
+* Global Exception Handling
+* Request Validation
+* DTO Pattern
+* MapStruct Mapping Layer
 
 Status:
 
@@ -97,6 +103,9 @@ Status:
 * Actuator enabled
 * CRUD operations verified
 * Relationship persistence verified
+* Validation verified
+* Exception handling verified
+* DTO mapping verified
 
 ---
 
@@ -161,6 +170,49 @@ module.course_id → course.id
 
 ---
 
+## Learning Service Internal Architecture
+
+```text
+Controller
+    │
+    ▼
+Request DTO
+    │
+    ▼
+Service Layer
+    │
+    ▼
+Request Mapper (MapStruct)
+    │
+    ▼
+Entity
+    │
+    ▼
+Repository
+    │
+    ▼
+PostgreSQL
+```
+
+Response flow:
+
+```text
+PostgreSQL
+    │
+    ▼
+Entity
+    │
+    ▼
+Response Mapper (MapStruct)
+    │
+    ▼
+Response DTO
+    │
+    ▼
+Controller
+```
+---
+
 ## Current Development Status
 
 Completed:
@@ -174,14 +226,17 @@ Completed:
 * Course CRUD
 * Module CRUD
 * JPA relationships
+* Global Exception Handling
+* Request Validation
+* DTO Pattern
+* MapStruct Integration
 * Git Flow workflow
 * Pull Request workflow
 * Architecture documentation
 
 Next Planned Improvements:
 
-* Validation Layer
-* Global Exception Handling
-* DTO Pattern
 * Swagger / OpenAPI Documentation
+* Integration Testing
+* Unit Testing
 * Note Service implementation
