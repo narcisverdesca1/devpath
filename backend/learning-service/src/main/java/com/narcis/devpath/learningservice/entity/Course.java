@@ -1,6 +1,8 @@
 package com.narcis.devpath.learningservice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,10 +20,15 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Title is required")
+    @Size(max = 100, message = "Title cannot exceed 100 characters")
     private String title;
 
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
+    @NotBlank(message = "Difficulty is required")
+    @Size(max = 50, message = "Difficulty cannot exceed 50 characters")
     private String difficulty;
 
     private LocalDateTime createdAt;

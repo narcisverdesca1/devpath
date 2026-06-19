@@ -2,6 +2,7 @@ package com.narcis.devpath.learningservice.controller;
 
 import com.narcis.devpath.learningservice.entity.Course;
 import com.narcis.devpath.learningservice.service.CourseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
-    public Course createCourse(@RequestBody Course course) {
+    public Course createCourse(@Valid @RequestBody Course course) {
         return courseService.createCourse(course);
     }
 
@@ -36,7 +37,7 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    public Course updateCourse(@PathVariable Long id, @RequestBody Course course) {
+    public Course updateCourse(@PathVariable Long id, @Valid @RequestBody Course course) {
         return courseService.updateCourse(id, course);
     }
 }

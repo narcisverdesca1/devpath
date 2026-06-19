@@ -2,6 +2,7 @@ package com.narcis.devpath.learningservice.controller;
 
 import com.narcis.devpath.learningservice.entity.Module;
 import com.narcis.devpath.learningservice.service.ModuleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +16,7 @@ public class ModuleController {
 
     @PostMapping("/courses/{courseId}/modules")
     public Module createModule(@PathVariable Long courseId,
-                               @RequestBody Module module) {
+                               @Valid @RequestBody Module module) {
         return moduleService.createModule(courseId, module);
     }
 
@@ -32,7 +33,7 @@ public class ModuleController {
 
     @PutMapping("/modules/{id}")
     public Module updateModule(@PathVariable Long id,
-                               @RequestBody Module module) {
+                               @Valid @RequestBody Module module) {
         return moduleService.updateModuleById(id, module);
     }
 
