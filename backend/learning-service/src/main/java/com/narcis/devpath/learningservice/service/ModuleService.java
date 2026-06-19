@@ -1,5 +1,6 @@
 package com.narcis.devpath.learningservice.service;
 
+import com.narcis.devpath.learningservice.exception.ResourceNotFoundException;
 import com.narcis.devpath.learningservice.repository.CourseRepository;
 import com.narcis.devpath.learningservice.repository.ModuleRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class ModuleService {
 
     public Module createModule(Long courseId, Module module) {
         module.setCourse(courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found with id: " + courseId)));
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId)));
 
         return moduleRepository.save(module);
     }
@@ -27,11 +28,11 @@ public class ModuleService {
     }
 
     public Optional<Module> findModuleById(Long id){
-        return moduleRepository.findById(id);
+        return Optional.of(moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(("Module not found with id: " + id))));
     }
 
     public Module updateModuleById(Long id, Module updatedModule){
-        Module moduleToUpdate = moduleRepository.findById(id).orElseThrow(() -> new RuntimeException(("Module not found with id: " + id)));
+        Module moduleToUpdate = moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(("Module not found with id: " + id)));
         moduleToUpdate.setTitle(updatedModule.getTitle());
         moduleToUpdate.setDescription(updatedModule.getDescription());
         moduleToUpdate.setPosition(updatedModule.getPosition());
@@ -39,6 +40,7 @@ public class ModuleService {
     }
 
     public void deleteModuleById(Long id){
+        moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(("Module not found with id: " + id)));
         moduleRepository.deleteById(id);
     }
 }

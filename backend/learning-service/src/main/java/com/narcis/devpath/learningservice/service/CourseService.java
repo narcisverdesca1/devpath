@@ -1,6 +1,7 @@
 package com.narcis.devpath.learningservice.service;
 
 import com.narcis.devpath.learningservice.entity.Course;
+import com.narcis.devpath.learningservice.exception.ResourceNotFoundException;
 import com.narcis.devpath.learningservice.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,16 +24,17 @@ public class CourseService {
     }
 
     public Optional<Course> getCourseById(Long id){
-        return courseRepository.findById(id);
+        return Optional.of(courseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id)));
     }
 
     public void deleteCourse(Long id){
+        courseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
         courseRepository.deleteById(id);
     }
 
     public Course updateCourse(Long id, Course updatedCourse) {
         Course existingCourse = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
 
         existingCourse.setTitle(updatedCourse.getTitle());
         existingCourse.setDescription(updatedCourse.getDescription());
