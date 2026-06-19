@@ -1,33 +1,47 @@
 package com.narcis.devpath.learningservice.service;
 
+import com.narcis.devpath.learningservice.dto.CourseRequestDto;
+import com.narcis.devpath.learningservice.dto.CourseResponseDto;
 import com.narcis.devpath.learningservice.entity.Course;
 import com.narcis.devpath.learningservice.exception.ResourceNotFoundException;
+import com.narcis.devpath.learningservice.mapper.CourseRequestMapper;
+import com.narcis.devpath.learningservice.mapper.CourseResponseMapper;
 import com.narcis.devpath.learningservice.repository.CourseRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CourseService {
 
     private final CourseRepository courseRepository;
 
-    public CourseService(CourseRepository courseRepository) {
+    private final CourseResponseMapper courseResponseMapper;
+    private final CourseRequestMapper courseRequestMapper;
+
+    public CourseService(CourseRepository courseRepository, CourseResponseMapper courseResponseMapper, CourseRequestMapper courseRequestMapper) {
         this.courseRepository = courseRepository;
+        this.courseResponseMapper = courseResponseMapper;
+        this.courseRequestMapper = courseRequestMapper;
     }
 
-    public Course createCourse(Course course){
-        return courseRepository.save(course);
+    public CourseResponseDto createCourse(CourseRequestDto courseRequestDto) {
+        Course course = courseRequestMapper.toEntity(courseRequestDto);
+        Course savedCourse = courseRepository.save(course);
+
+        return courseResponseMapper.toResponseDto(savedCourse);
     }
 
-    public List<Course> getAllCourses(){
-        return courseRepository.findAll();
+    public List<CourseResponseDto> getAllCourses(){
+        List<Course> courses = courseRepository.findAll();
+
+        return courseResponseMapper.toResponseDtoList(courses);
     }
 
-    public Optional<Course> getCourseById(Long id){
-        return Optional.of(courseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id)));
+    public CourseResponseDto getCourseById(Long id){
+        Course course = courseRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Course"));
+
+        return courseResponseMapper.toResponseDto(course);
     }
 
     public void deleteCourse(Long id){
@@ -35,14 +49,13 @@ public class CourseService {
         courseRepository.deleteById(id);
     }
 
-    public Course updateCourse(Long id, Course updatedCourse) {
+    public CourseResponseDto updateCourse(Long id, CourseRequestDto courseUpdatedRequestDto) {
         Course existingCourse = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
 
-        existingCourse.setTitle(updatedCourse.getTitle());
-        existingCourse.setDescription(updatedCourse.getDescription());
-        existingCourse.setDifficulty(updatedCourse.getDifficulty());
+        courseRequestMapper.updateEntityFromRequest(courseUpdatedRequestDto, existingCourse);
+        Course updatedCourse = courseRepository.save(existingCourse);
 
-        return courseRepository.save(existingCourse);
+        return courseResponseMapper.toResponseDto(updatedCourse);
     }
 }

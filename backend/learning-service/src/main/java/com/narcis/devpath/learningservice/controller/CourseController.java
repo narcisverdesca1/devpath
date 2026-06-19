@@ -1,13 +1,13 @@
 package com.narcis.devpath.learningservice.controller;
 
-import com.narcis.devpath.learningservice.entity.Course;
+import com.narcis.devpath.learningservice.dto.CourseRequestDto;
+import com.narcis.devpath.learningservice.dto.CourseResponseDto;
 import com.narcis.devpath.learningservice.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/courses")
@@ -17,17 +17,17 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
-    public Course createCourse(@Valid @RequestBody Course course) {
-        return courseService.createCourse(course);
+    public CourseResponseDto createCourse(@Valid @RequestBody CourseRequestDto courseRequestDto) {
+        return courseService.createCourse(courseRequestDto);
     }
 
     @GetMapping
-    public List<Course> getAllCourses() {
+    public List<CourseResponseDto> getAllCourses() {
         return courseService.getAllCourses();
     }
 
     @GetMapping("/{id}")
-    public Optional<Course> getCourseById(@PathVariable Long id) {
+    public CourseResponseDto getCourseById(@PathVariable Long id) {
         return courseService.getCourseById(id);
     }
 
@@ -37,7 +37,7 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    public Course updateCourse(@PathVariable Long id, @Valid @RequestBody Course course) {
-        return courseService.updateCourse(id, course);
+    public CourseResponseDto updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequestDto courseRequestDto) {
+        return courseService.updateCourse(id, courseRequestDto);
     }
 }

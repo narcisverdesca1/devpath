@@ -15,6 +15,9 @@ Current implementation includes:
 * Course → Module relationship
 * Global exception handling
 * Request validation with Bean Validation
+* DTO Pattern
+* MapStruct integration
+* Request/Response mapping layer
 
 ---
 
@@ -130,6 +133,42 @@ Persistence was verified through PostgreSQL inspection.
 * CourseController
 * ModuleController
 
+### DTO
+
+#### Request DTOs
+
+* CourseRequestDto
+* ModuleRequestDto
+
+#### Response DTOs
+
+* CourseResponseDto
+* ModuleResponseDto
+
+### Mapper
+
+Implemented using MapStruct.
+
+#### Request Mappers
+
+* CourseRequestMapper
+* ModuleRequestMapper
+
+Responsibilities:
+
+* Request DTO → Entity conversion
+* Entity update through @MappingTarget
+
+#### Response Mappers
+
+* CourseResponseMapper
+* ModuleResponseMapper
+
+Responsibilities:
+
+* Entity → Response DTO conversion
+* Collection mapping support
+
 ### Exception Handling
 
 * ResourceNotFoundException
@@ -220,26 +259,33 @@ Invalid requests return:
 400 Bad Request
 ```
 
-Example:
+---
 
-```json
-{
-  "title": "",
-  "description": "Spring Boot Course",
-  "difficulty": "BEGINNER"
-}
-```
+## DTO Pattern
 
-Response:
+The application no longer exposes JPA entities directly through REST APIs.
 
-```json
-{
-  "timestamp": "2026-06-19T10:00:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Title is required"
-}
-```
+REST endpoints now communicate through dedicated request and response DTOs.
+
+Benefits:
+
+* Clear separation between persistence and API contracts
+* Safer API evolution
+* Reduced coupling
+* Improved maintainability
+
+---
+
+## MapStruct Integration
+
+Object mapping is handled through MapStruct.
+
+Benefits:
+
+* Reduced boilerplate code
+* Centralized mapping logic
+* Compile-time mapper generation
+* Cleaner service layer
 
 ---
 
@@ -262,6 +308,10 @@ Verified successfully:
 * Relationship persistence in PostgreSQL
 * Global exception handling
 * Request validation
+* DTO request validation flow
+* DTO response mapping
+* MapStruct integration
+* Entity isolation from REST APIs
 * 404 responses for missing resources
 * 400 responses for invalid requests
 
@@ -298,7 +348,7 @@ Instead of returning generic server errors, the application now throws domain-sp
 
 ### Bean Validation
 
-Validation rules are declared directly on entity fields using Jakarta Validation annotations.
+Validation rules are declared directly on DTO fields using Jakarta Validation annotations.
 
 Benefits:
 
@@ -307,12 +357,19 @@ Benefits:
 * Automatic request validation
 * Standardized 400 responses
 
+### DTO Pattern
+
+Dedicated DTOs provide a stable API contract independent from the persistence model.
+
+### MapStruct
+
+Compile-time generated mappers reduce boilerplate and improve maintainability.
+
 ### Future Improvements
 
-* DTO Pattern
-* MapStruct Integration
-* Dedicated API response models
 * Swagger / OpenAPI documentation
+* Integration testing
+* Service layer unit testing
 
 ---
 
@@ -329,15 +386,18 @@ Implemented features:
 * JPA/Hibernate integration
 * Global Exception Handling
 * Request Validation
+* DTO Pattern
+* MapStruct Mapping Layer
+* Request/Response DTOs
 
 Status:
 
 ```text
-REQUEST VALIDATION COMPLETED
+DTO PATTERN COMPLETED
 ```
 
 Ready for:
 
-* DTO Introduction
-* MapStruct
-* API Documentation
+* Swagger / OpenAPI Documentation
+* Integration Testing
+* Unit Testing
