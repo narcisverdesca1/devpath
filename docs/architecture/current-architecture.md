@@ -70,6 +70,8 @@ Technology:
 * Eureka Discovery Client
 * Jakarta Bean Validation
 * MapStruct
+* SpringDoc OpenAPI
+* Swagger UI
 
 Database:
 
@@ -95,6 +97,8 @@ Implemented Features:
 * Request Validation
 * DTO Pattern
 * MapStruct Mapping Layer
+* OpenAPI Documentation
+* Swagger UI Integration
 
 Status:
 
@@ -106,6 +110,8 @@ Status:
 * Validation verified
 * Exception handling verified
 * DTO mapping verified
+* OpenAPI documentation verified
+* Swagger UI verified
 
 ---
 
@@ -118,10 +124,8 @@ Status:
                             │
             ┌───────────────┴───────────────┐
             │                               │
-            │                               │
       API Gateway                  Learning Service
       localhost:8765               localhost:8081
-                                           │
                                            │
                                            ▼
                                    PostgreSQL 17
@@ -131,6 +135,31 @@ Status:
                       │                                         │
               devpath_learning                          devpath_note
 ```
+
+---
+
+## API Documentation Layer
+
+Technology:
+
+* SpringDoc OpenAPI
+* Swagger UI
+
+Responsibilities:
+
+* Automatic OpenAPI specification generation
+* Interactive API documentation
+* DTO schema generation
+* Validation documentation
+* Error response documentation
+
+Documented Components:
+
+* CourseController
+* ModuleController
+* Request DTOs
+* Response DTOs
+* ApiError
 
 ---
 
@@ -154,18 +183,6 @@ Module
 ├── title
 ├── description
 └── position
-```
-
-Relationship:
-
-```text
-Course (1) ──────────────► (N) Module
-```
-
-Persistence:
-
-```text
-module.course_id → course.id
 ```
 
 ---
@@ -211,6 +228,7 @@ Response DTO
     ▼
 Controller
 ```
+
 ---
 
 ## Current Development Status
@@ -230,13 +248,15 @@ Completed:
 * Request Validation
 * DTO Pattern
 * MapStruct Integration
+* OpenAPI Documentation
 * Git Flow workflow
 * Pull Request workflow
 * Architecture documentation
 
 Next Planned Improvements:
 
-* Swagger / OpenAPI Documentation
 * Integration Testing
 * Unit Testing
+* Pagination and Sorting
+* Search Capabilities
 * Note Service implementation
