@@ -14,6 +14,7 @@ Current implementation includes:
 * Spring Data JPA integration
 * Course → Module relationship
 * Global exception handling
+* Request validation with Bean Validation
 
 ---
 
@@ -30,6 +31,14 @@ Fields:
 * createdAt
 * updatedAt
 
+Validation:
+
+* title required
+* title max 100 characters
+* description max 1000 characters
+* difficulty required
+* difficulty max 50 characters
+
 ### Module
 
 Fields:
@@ -38,6 +47,14 @@ Fields:
 * title
 * description
 * position
+
+Validation:
+
+* title required
+* title max 100 characters
+* description max 1000 characters
+* position required
+* position >= 0
 
 ---
 
@@ -153,55 +170,19 @@ A centralized exception handling mechanism has been implemented using:
 @RestControllerAdvice
 ```
 
-Implemented components:
+Implemented handlers:
 
-### ResourceNotFoundException
+* ResourceNotFoundException → 404 Not Found
+* MethodArgumentNotValidException → 400 Bad Request
 
-Used when a requested resource cannot be found.
-
-Example:
-
-```text
-throw new ResourceNotFoundException(
-        "Course not found with id: " + id
-);
-```
-
-### ApiError
-
-Standard response model for API errors.
-
-Fields:
-
-* timestamp
-* status
-* error
-* message
-
-### GlobalExceptionHandler
-
-Responsible for converting application exceptions into HTTP responses.
-
-Example mapping:
-
-```text
-@ExceptionHandler(ResourceNotFoundException.class)
-```
-
-Returns:
-
-```http
-404 Not Found
-```
-
-Example response:
+Standard error response model:
 
 ```json
 {
   "timestamp": "2026-06-19T10:00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Course not found with id: 999"
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Title is required"
 }
 ```
 
@@ -211,6 +192,54 @@ Benefits:
 * Centralized error handling
 * Proper HTTP status codes
 * Improved API consumer experience
+
+---
+
+## Request Validation
+
+Validation is implemented using Jakarta Bean Validation.
+
+Annotations currently used:
+
+* @Valid
+* @NotBlank
+* @Size
+* @NotNull
+* @PositiveOrZero
+
+Validation is enforced on:
+
+* Course creation
+* Course update
+* Module creation
+* Module update
+
+Invalid requests return:
+
+```http
+400 Bad Request
+```
+
+Example:
+
+```json
+{
+  "title": "",
+  "description": "Spring Boot Course",
+  "difficulty": "BEGINNER"
+}
+```
+
+Response:
+
+```json
+{
+  "timestamp": "2026-06-19T10:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Title is required"
+}
+```
 
 ---
 
@@ -232,7 +261,9 @@ Verified successfully:
 * Foreign key generation
 * Relationship persistence in PostgreSQL
 * Global exception handling
+* Request validation
 * 404 responses for missing resources
+* 400 responses for invalid requests
 
 ---
 
@@ -251,16 +282,7 @@ This allows a Course to contain multiple Modules while each Module belongs to on
 
 ### JSON Serialization Issue
 
-The bidirectional relationship initially caused an infinite JSON serialization loop:
-
-```text
-Course
-└── modules
-    └── course
-        └── modules
-            └── course
-                ...
-```
+The bidirectional relationship initially caused an infinite JSON serialization loop.
 
 The issue was solved by applying:
 
@@ -268,29 +290,28 @@ The issue was solved by applying:
 @JsonIgnore
 ```
 
-on the `course` field inside the Module entity:
-
-```text
-@JsonIgnore
-private Course course;
-```
+on the `course` field inside the Module entity.
 
 ### Centralized Exception Handling
 
 Instead of returning generic server errors, the application now throws domain-specific exceptions that are translated into appropriate HTTP responses by a global exception handler.
 
+### Bean Validation
+
+Validation rules are declared directly on entity fields using Jakarta Validation annotations.
+
 Benefits:
 
-* Better separation of concerns
-* Cleaner service layer
-* Consistent REST API behavior
-* Easier future extension for validation and business exceptions
+* Cleaner controllers
+* Consistent validation rules
+* Automatic request validation
+* Standardized 400 responses
 
 ### Future Improvements
 
 * DTO Pattern
+* MapStruct Integration
 * Dedicated API response models
-* Validation with Bean Validation
 * Swagger / OpenAPI documentation
 
 ---
@@ -307,15 +328,16 @@ Implemented features:
 * PostgreSQL persistence
 * JPA/Hibernate integration
 * Global Exception Handling
+* Request Validation
 
 Status:
 
 ```text
-GLOBAL EXCEPTION HANDLING COMPLETED
+REQUEST VALIDATION COMPLETED
 ```
 
 Ready for:
 
-* Validation Layer
 * DTO Introduction
+* MapStruct
 * API Documentation
