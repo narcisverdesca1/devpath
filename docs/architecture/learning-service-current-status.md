@@ -13,6 +13,7 @@ Current implementation includes:
 * PostgreSQL persistence
 * Spring Data JPA integration
 * Course → Module relationship
+* Global exception handling
 
 ---
 
@@ -48,14 +49,14 @@ The Learning Service currently models a one-to-many relationship between Course 
 
 ### Course Mapping
 
-```java
+```text
 @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
 private List<Module> modules;
 ```
 
 ### Module Mapping
 
-```java
+```text
 @ManyToOne
 @JoinColumn(name = "course_id")
 @JsonIgnore
@@ -112,6 +113,12 @@ Persistence was verified through PostgreSQL inspection.
 * CourseController
 * ModuleController
 
+### Exception Handling
+
+* ResourceNotFoundException
+* ApiError
+* GlobalExceptionHandler
+
 ---
 
 ## Implemented Endpoints
@@ -138,6 +145,75 @@ DELETE /modules/{id}
 
 ---
 
+## Global Exception Handling
+
+A centralized exception handling mechanism has been implemented using:
+
+```text
+@RestControllerAdvice
+```
+
+Implemented components:
+
+### ResourceNotFoundException
+
+Used when a requested resource cannot be found.
+
+Example:
+
+```text
+throw new ResourceNotFoundException(
+        "Course not found with id: " + id
+);
+```
+
+### ApiError
+
+Standard response model for API errors.
+
+Fields:
+
+* timestamp
+* status
+* error
+* message
+
+### GlobalExceptionHandler
+
+Responsible for converting application exceptions into HTTP responses.
+
+Example mapping:
+
+```text
+@ExceptionHandler(ResourceNotFoundException.class)
+```
+
+Returns:
+
+```http
+404 Not Found
+```
+
+Example response:
+
+```json
+{
+  "timestamp": "2026-06-19T10:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Course not found with id: 999"
+}
+```
+
+Benefits:
+
+* Consistent API responses
+* Centralized error handling
+* Proper HTTP status codes
+* Improved API consumer experience
+
+---
+
 ## Verification Completed
 
 Verified successfully:
@@ -155,6 +231,8 @@ Verified successfully:
 * Course → Module relationship
 * Foreign key generation
 * Relationship persistence in PostgreSQL
+* Global exception handling
+* 404 responses for missing resources
 
 ---
 
@@ -164,7 +242,7 @@ Verified successfully:
 
 The Course ↔ Module relationship was implemented using:
 
-```java
+```text
 @OneToMany
 @ManyToOne
 ```
@@ -186,22 +264,32 @@ Course
 
 The issue was solved by applying:
 
-```java
+```text
 @JsonIgnore
 ```
 
 on the `course` field inside the Module entity:
 
-```java
+```text
 @JsonIgnore
 private Course course;
 ```
+
+### Centralized Exception Handling
+
+Instead of returning generic server errors, the application now throws domain-specific exceptions that are translated into appropriate HTTP responses by a global exception handler.
+
+Benefits:
+
+* Better separation of concerns
+* Cleaner service layer
+* Consistent REST API behavior
+* Easier future extension for validation and business exceptions
 
 ### Future Improvements
 
 * DTO Pattern
 * Dedicated API response models
-* Global Exception Handling
 * Validation with Bean Validation
 * Swagger / OpenAPI documentation
 
@@ -218,16 +306,16 @@ Implemented features:
 * Course → Module relationship
 * PostgreSQL persistence
 * JPA/Hibernate integration
+* Global Exception Handling
 
 Status:
 
 ```text
-MODULE CRUD IMPLEMENTATION COMPLETED
+GLOBAL EXCEPTION HANDLING COMPLETED
 ```
 
 Ready for:
 
 * Validation Layer
-* Global Exception Handling
 * DTO Introduction
 * API Documentation
