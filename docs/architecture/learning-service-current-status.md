@@ -18,6 +18,8 @@ Current implementation includes:
 * DTO Pattern
 * MapStruct integration
 * Request/Response mapping layer
+* OpenAPI documentation
+* Swagger UI integration
 
 ---
 
@@ -201,6 +203,53 @@ DELETE /modules/{id}
 
 ---
 
+## OpenAPI Documentation
+
+API documentation is implemented using SpringDoc OpenAPI.
+
+Configuration:
+
+* OpenApiConfig
+* Swagger UI
+* OpenAPI 3 specification generation
+
+Documentation annotations currently used:
+
+* @Tag
+* @Operation
+* @ApiResponse
+* @ApiResponses
+* @Schema
+
+Documented Components:
+
+### Controllers
+
+* CourseController
+* ModuleController
+
+### DTOs
+
+* CourseRequestDto
+* CourseResponseDto
+* ModuleRequestDto
+* ModuleResponseDto
+
+### Error Responses
+
+* 400 Bad Request
+* 404 Not Found
+
+Benefits:
+
+* Self-documenting APIs
+* Interactive API exploration
+* Faster frontend integration
+* Reduced documentation drift
+* Consistent API contracts
+
+---
+
 ## Global Exception Handling
 
 A centralized exception handling mechanism has been implemented using:
@@ -225,13 +274,6 @@ Standard error response model:
 }
 ```
 
-Benefits:
-
-* Consistent API responses
-* Centralized error handling
-* Proper HTTP status codes
-* Improved API consumer experience
-
 ---
 
 ## Request Validation
@@ -246,26 +288,13 @@ Annotations currently used:
 * @NotNull
 * @PositiveOrZero
 
-Validation is enforced on:
-
-* Course creation
-* Course update
-* Module creation
-* Module update
-
-Invalid requests return:
-
-```http
-400 Bad Request
-```
-
 ---
 
 ## DTO Pattern
 
 The application no longer exposes JPA entities directly through REST APIs.
 
-REST endpoints now communicate through dedicated request and response DTOs.
+REST endpoints communicate through dedicated request and response DTOs.
 
 Benefits:
 
@@ -312,64 +341,22 @@ Verified successfully:
 * DTO response mapping
 * MapStruct integration
 * Entity isolation from REST APIs
+* Swagger UI accessibility
+* OpenAPI specification generation
+* Controller documentation rendering
+* DTO schema rendering
+* Error response documentation
 * 404 responses for missing resources
 * 400 responses for invalid requests
 
 ---
 
-## Lessons Learned
+## Future Improvements
 
-### Bidirectional JPA Relationships
-
-The Course ↔ Module relationship was implemented using:
-
-```text
-@OneToMany
-@ManyToOne
-```
-
-This allows a Course to contain multiple Modules while each Module belongs to one Course.
-
-### JSON Serialization Issue
-
-The bidirectional relationship initially caused an infinite JSON serialization loop.
-
-The issue was solved by applying:
-
-```text
-@JsonIgnore
-```
-
-on the `course` field inside the Module entity.
-
-### Centralized Exception Handling
-
-Instead of returning generic server errors, the application now throws domain-specific exceptions that are translated into appropriate HTTP responses by a global exception handler.
-
-### Bean Validation
-
-Validation rules are declared directly on DTO fields using Jakarta Validation annotations.
-
-Benefits:
-
-* Cleaner controllers
-* Consistent validation rules
-* Automatic request validation
-* Standardized 400 responses
-
-### DTO Pattern
-
-Dedicated DTOs provide a stable API contract independent from the persistence model.
-
-### MapStruct
-
-Compile-time generated mappers reduce boilerplate and improve maintainability.
-
-### Future Improvements
-
-* Swagger / OpenAPI documentation
 * Integration testing
 * Service layer unit testing
+* Pagination and sorting
+* Search capabilities
 
 ---
 
@@ -389,15 +376,19 @@ Implemented features:
 * DTO Pattern
 * MapStruct Mapping Layer
 * Request/Response DTOs
+* OpenAPI Documentation
+* Swagger UI Integration
 
 Status:
 
 ```text
-DTO PATTERN COMPLETED
+OPENAPI DOCUMENTATION COMPLETED
 ```
 
 Ready for:
 
-* Swagger / OpenAPI Documentation
 * Integration Testing
 * Unit Testing
+* Pagination and Sorting
+* Search Capabilities
+* Note Service
