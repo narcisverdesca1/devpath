@@ -1,9 +1,10 @@
 package com.narcis.devpath.learningservice.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
-
+@Builder
 @Schema(description = "Course response")
 public record CourseResponseDto(
 
