@@ -17,8 +17,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CourseServiceTest {
@@ -112,6 +111,78 @@ public class CourseServiceTest {
 
         verify(courseRepository).findById(id);
 
+    }
+
+
+    @Test
+    void deleteCourse_shouldDeleteExistingCourse() {
+        Long id = 2L;
+        Course course = new Course();
+        course.setId(2L);
+        course.setTitle("TestoCourse");
+        course.setDescription("TestoDescrizione");
+        course.setDifficulty("Beginner");
+
+
+        when(courseRepository.findById(id)).thenReturn(Optional.of(course));
+
+        courseService.deleteCourse(id);
+
+        verify(courseRepository).findById(id);
+        verify(courseRepository).deleteById(id);
+    }
+
+    @Test
+    void deleteCourse_shouldThrowResourceNotFoundException_whenCourseDoesNotExist(){
+        Long id = 3L;
+        when(courseRepository.findById(id)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> courseService.deleteCourse(id)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course not found: " + id);
+        verify(courseRepository).findById(id);
+        verify(courseRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void updateCourse_shouldUpdateExistingCourse() {
+        // Arrange
+        Long id = 2L;
+
+        CourseRequestDto requestDto = new CourseRequestDto(
+                "TestoCourseUpdated",
+                "TestoDescrizione",
+                "Beginner"
+        );
+
+        Course existingCourse = new Course();
+        existingCourse.setId(id);
+        existingCourse.setTitle("TestoCourse");
+        existingCourse.setDescription("TestoDescrizione");
+        existingCourse.setDifficulty("Beginner");
+
+        CourseResponseDto responseDto = new CourseResponseDto(
+                id,
+                "TestoCourseUpdated",
+                "TestoDescrizione",
+                "Beginner",
+                null,
+                null
+        );
+
+        // Mock
+        when(courseRepository.findById(id)).thenReturn(Optional.of(existingCourse));
+        when(courseRepository.save(existingCourse)).thenReturn(existingCourse);
+        when(courseResponseMapper.toResponseDto(existingCourse)).thenReturn(responseDto);
+
+        // Act
+        CourseResponseDto result = courseService.updateCourse(id, requestDto);
+
+        // Assert
+        assertThat(result).isEqualTo(responseDto);
+
+        // Verify
+        verify(courseRepository).findById(id);
+        verify(courseRequestMapper).updateEntityFromRequest(requestDto, existingCourse);
+        verify(courseRepository).save(existingCourse);
+        verify(courseResponseMapper).toResponseDto(existingCourse);
     }
 
 }
