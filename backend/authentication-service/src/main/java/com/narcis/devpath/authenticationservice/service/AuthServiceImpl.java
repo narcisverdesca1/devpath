@@ -7,9 +7,11 @@ import com.narcis.devpath.authenticationservice.dto.RegisterResponseDto;
 import com.narcis.devpath.authenticationservice.entity.Role;
 import com.narcis.devpath.authenticationservice.entity.User;
 import com.narcis.devpath.authenticationservice.exception.EmailAlreadyExistsException;
+import com.narcis.devpath.authenticationservice.exception.InvalidCredentialsException;
 import com.narcis.devpath.authenticationservice.mapper.UserMapper;
 import com.narcis.devpath.authenticationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserMapper userMapper;
+
+    private final JwtService jwtService;
 
     @Override
     public RegisterResponseDto register(RegisterRequestDto request) {
@@ -40,6 +44,19 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponseDto login(LoginRequestDto request) {
-        return null;
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(InvalidCredentialsException::new);
+
+        boolean isValidPassword = passwordEncoder.matches(request.password(), user.getPassword());
+
+        if (!isValidPassword) {
+            throw new InvalidCredentialsException();
+        }
+
+        String token = jwtService.generateToken(user);
+
+        return LoginResponseDto.builder()
+                .token(token)
+                .build();
     }
 }
