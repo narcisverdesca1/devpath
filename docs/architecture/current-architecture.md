@@ -72,6 +72,11 @@ Technology:
 * MapStruct
 * SpringDoc OpenAPI
 * Swagger UI
+* JUnit 5
+* Mockito
+* AssertJ
+* MockMvc
+* Testcontainers
 
 Database:
 
@@ -99,6 +104,9 @@ Implemented Features:
 * MapStruct Mapping Layer
 * OpenAPI Documentation
 * Swagger UI Integration
+* Service Unit Testing
+* Repository Integration Testing
+* Controller Testing
 
 Status:
 
@@ -112,6 +120,9 @@ Status:
 * DTO mapping verified
 * OpenAPI documentation verified
 * Swagger UI verified
+* Service layer tested
+* Repository layer tested with Testcontainers and PostgreSQL
+* Controller layer tested with MockMvc
 
 ---
 
@@ -160,6 +171,76 @@ Documented Components:
 * Request DTOs
 * Response DTOs
 * ApiError
+
+---
+
+## Testing Strategy
+
+Learning Service is tested across controller, service, and repository layers.
+
+### Service Layer Testing
+
+Technology:
+
+* JUnit 5
+* Mockito
+* AssertJ
+
+Scope:
+
+* Business logic
+* Repository interaction
+* Mapper interaction
+* Success scenarios
+* Resource not found scenarios
+
+Test classes:
+
+* CourseServiceTest
+* ModuleServiceTest
+
+### Repository Integration Testing
+
+Technology:
+
+* Spring Boot Test
+* Testcontainers
+* PostgreSQL
+
+Scope:
+
+* Entity persistence
+* Entity retrieval
+* Custom repository queries
+* Course → Module relationship
+* PostgreSQL integration
+
+Test classes:
+
+* CourseRepositoryIT
+* ModuleRepositoryIT
+
+### Controller Testing
+
+Technology:
+
+* WebMvcTest
+* MockMvc
+* MockitoBean
+* ObjectMapper
+
+Scope:
+
+* REST endpoints
+* HTTP status codes
+* JSON responses
+* Request validation errors
+* Service interaction
+
+Test classes:
+
+* CourseControllerTest
+* ModuleControllerTest
 
 ---
 
@@ -229,6 +310,25 @@ Response DTO
 Controller
 ```
 
+Testing flow:
+
+```text
+Controller Tests
+    │
+    ▼
+MockMvc + Mocked Service
+
+Service Tests
+    │
+    ▼
+Mockito Repositories + Mockito Mappers
+
+Repository Integration Tests
+    │
+    ▼
+Testcontainers PostgreSQL
+```
+
 ---
 
 ## Current Development Status
@@ -249,14 +349,19 @@ Completed:
 * DTO Pattern
 * MapStruct Integration
 * OpenAPI Documentation
+* Swagger UI Documentation
+* Service Unit Testing
+* Repository Integration Testing
+* Controller Testing
+* Testcontainers PostgreSQL Integration
+* MockMvc REST API Testing
 * Git Flow workflow
 * Pull Request workflow
 * Architecture documentation
 
 Next Planned Improvements:
 
-* Integration Testing
-* Unit Testing
+* Authentication Service
 * Pagination and Sorting
 * Search Capabilities
 * Note Service implementation
