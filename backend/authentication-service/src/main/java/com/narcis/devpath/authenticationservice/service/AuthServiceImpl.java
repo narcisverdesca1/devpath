@@ -6,9 +6,9 @@ import com.narcis.devpath.authenticationservice.dto.RegisterRequestDto;
 import com.narcis.devpath.authenticationservice.dto.RegisterResponseDto;
 import com.narcis.devpath.authenticationservice.entity.Role;
 import com.narcis.devpath.authenticationservice.entity.User;
+import com.narcis.devpath.authenticationservice.exception.EmailAlreadyExistsException;
 import com.narcis.devpath.authenticationservice.mapper.UserMapper;
 import com.narcis.devpath.authenticationservice.repository.UserRepository;
-import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     public RegisterResponseDto register(RegisterRequestDto request) {
         boolean emailExist = userRepository.existsByEmail(request.email());
         if (emailExist) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new EmailAlreadyExistsException(request.email());
         }
 
         User user = userMapper.toEntity(request);
