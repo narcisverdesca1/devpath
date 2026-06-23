@@ -39,7 +39,7 @@ public class CourseService {
     }
 
     public CourseResponseDto getCourseById(Long id){
-        Course course = courseRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Course"));
+        Course course = courseRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Course not found: " + id));
 
         return courseResponseMapper.toResponseDto(course);
     }

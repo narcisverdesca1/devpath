@@ -25,12 +25,6 @@ public class ModuleService {
     private final ModuleRequestMapper moduleRequestMapper;
     private final ModuleResponseMapper moduleResponseMapper;
 
-    public Module createModule(Long courseId, Module module) {
-        module.setCourse(courseRepository.findById(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId)));
-
-        return moduleRepository.save(module);
-    }
 
     public ModuleResponseDto createModule(Long courseId, ModuleRequestDto moduleRequestDto) {
         Course course = courseRepository.findById(courseId)
@@ -72,7 +66,7 @@ public class ModuleService {
     }
 
     public void deleteModuleById(Long id){
-        moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(("Module not found with id: " + id)));
+        moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Module not found with id: " + id));
         moduleRepository.deleteById(id);
     }
 }
