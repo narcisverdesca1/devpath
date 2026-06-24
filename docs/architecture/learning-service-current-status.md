@@ -20,6 +20,86 @@ Current implementation includes:
 * Request/Response mapping layer
 * OpenAPI documentation
 * Swagger UI integration
+* Service unit tests
+* Repository integration tests with Testcontainers
+* Controller tests with MockMvc
+
+---
+
+## Testing
+
+Testing has been implemented across the main application layers.
+
+### Service Tests
+
+Implemented using:
+
+* JUnit 5
+* Mockito
+* AssertJ
+
+Covered classes:
+
+* CourseServiceTest
+* ModuleServiceTest
+
+Covered scenarios:
+
+* create operations
+* find all operations
+* find by id operations
+* update operations
+* delete operations
+* resource not found cases
+* mapper interaction
+* repository interaction
+
+### Repository Integration Tests
+
+Implemented using:
+
+* Spring Boot Test
+* Testcontainers
+* PostgreSQL
+* JPA repositories
+
+Covered classes:
+
+* CourseRepositoryIT
+* ModuleRepositoryIT
+
+Covered scenarios:
+
+* entity persistence
+* entity retrieval
+* custom query methods
+* Course → Module relationship
+* PostgreSQL integration
+
+### Controller Tests
+
+Implemented using:
+
+* WebMvcTest
+* MockMvc
+* MockitoBean
+* ObjectMapper
+
+Covered classes:
+
+* CourseControllerTest
+* ModuleControllerTest
+
+Covered scenarios:
+
+* HTTP status codes
+* JSON response structure
+* request validation errors
+* create endpoints
+* read endpoints
+* update endpoints
+* delete endpoints
+* service interaction
 
 ---
 
@@ -114,7 +194,7 @@ course
 module
 ```
 
-Persistence was verified through PostgreSQL inspection.
+Persistence was verified through PostgreSQL inspection and repository integration tests.
 
 ---
 
@@ -348,21 +428,27 @@ Verified successfully:
 * Error response documentation
 * 404 responses for missing resources
 * 400 responses for invalid requests
+* Service unit tests
+* Repository integration tests
+* Controller tests
+* Testcontainers PostgreSQL testing
+* MockMvc REST API testing
 
 ---
 
 ## Future Improvements
 
-* Integration testing
-* Service layer unit testing
 * Pagination and sorting
 * Search capabilities
+* Advanced filtering
+* Test coverage reporting
+* CI pipeline test execution
 
 ---
 
 ## Current Status
 
-Learning Service is fully operational and registered in Eureka.
+Learning Service is fully operational, tested, documented, and registered in Eureka.
 
 Implemented features:
 
@@ -378,17 +464,21 @@ Implemented features:
 * Request/Response DTOs
 * OpenAPI Documentation
 * Swagger UI Integration
+* Service Unit Testing
+* Repository Integration Testing
+* Controller Testing
+* Testcontainers Integration
+* MockMvc Testing
 
 Status:
 
 ```text
-OPENAPI DOCUMENTATION COMPLETED
+LEARNING SERVICE TESTING COMPLETED
 ```
 
 Ready for:
 
-* Integration Testing
-* Unit Testing
+* Authentication Service
 * Pagination and Sorting
 * Search Capabilities
 * Note Service

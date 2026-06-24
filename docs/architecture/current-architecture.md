@@ -8,6 +8,7 @@ Databases:
 
 * devpath_learning
 * devpath_note
+* devpath_auth
 
 ---
 
@@ -72,6 +73,11 @@ Technology:
 * MapStruct
 * SpringDoc OpenAPI
 * Swagger UI
+* JUnit 5
+* Mockito
+* AssertJ
+* MockMvc
+* Testcontainers
 
 Database:
 
@@ -99,6 +105,9 @@ Implemented Features:
 * MapStruct Mapping Layer
 * OpenAPI Documentation
 * Swagger UI Integration
+* Service Unit Testing
+* Repository Integration Testing
+* Controller Testing
 
 Status:
 
@@ -112,28 +121,90 @@ Status:
 * DTO mapping verified
 * OpenAPI documentation verified
 * Swagger UI verified
+* Service layer tested
+* Repository layer tested with Testcontainers and PostgreSQL
+* Controller layer tested with MockMvc
 
 ---
+
+### Authentication Service
+
+Port:
+
+```text
+8082
+```
+
+Technology:
+
+* Spring Boot
+* Spring Security
+* JWT
+* Spring Data JPA
+* PostgreSQL
+* BCrypt
+* MapStruct
+
+Database:
+
+```text
+devpath_auth
+```
+
+Domain Model:
+
+```text
+User
+```
+
+Implemented Features:
+
+* User Registration
+* User Login
+* BCrypt Password Hashing
+* JWT Generation
+* JWT Validation
+* Stateless Authentication
+* Spring Security Integration
+* Global Exception Handling
+* Request Validation
+* Custom UserDetails Implementation
+
+Status:
+
+* Registered in Eureka
+* Connected to PostgreSQL
+* Registration verified
+* Login verified
+* JWT generation verified
+* JWT validation verified
+* Protected endpoint authentication verified
+* SecurityContext population verified
+
+```
+```
+
 
 ## Current Topology
 
 ```text
-                     Eureka Server
+                      Eureka Server
                      localhost:8761
                             ▲
                             │
-            ┌───────────────┴───────────────┐
-            │                               │
-      API Gateway                  Learning Service
-      localhost:8765               localhost:8081
-                                           │
-                                           ▼
-                                   PostgreSQL 17
-                                   localhost:5432
-                                           │
-                      ┌────────────────────┴────────────────────┐
-                      │                                         │
-              devpath_learning                          devpath_note
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+  API Gateway      Learning Service   Authentication Service
+ localhost:8765     localhost:8081        localhost:8082
+                            │                   │
+                            └─────────┬─────────┘
+                                      ▼
+                               PostgreSQL 17
+                               localhost:5432
+                                      │
+          ┌───────────────┬───────────┴───────────┐
+          │               │                       │
+  devpath_learning   devpath_note          devpath_auth
 ```
 
 ---
@@ -160,6 +231,76 @@ Documented Components:
 * Request DTOs
 * Response DTOs
 * ApiError
+
+---
+
+## Testing Strategy
+
+Learning Service is tested across controller, service, and repository layers.
+
+### Service Layer Testing
+
+Technology:
+
+* JUnit 5
+* Mockito
+* AssertJ
+
+Scope:
+
+* Business logic
+* Repository interaction
+* Mapper interaction
+* Success scenarios
+* Resource not found scenarios
+
+Test classes:
+
+* CourseServiceTest
+* ModuleServiceTest
+
+### Repository Integration Testing
+
+Technology:
+
+* Spring Boot Test
+* Testcontainers
+* PostgreSQL
+
+Scope:
+
+* Entity persistence
+* Entity retrieval
+* Custom repository queries
+* Course → Module relationship
+* PostgreSQL integration
+
+Test classes:
+
+* CourseRepositoryIT
+* ModuleRepositoryIT
+
+### Controller Testing
+
+Technology:
+
+* WebMvcTest
+* MockMvc
+* MockitoBean
+* ObjectMapper
+
+Scope:
+
+* REST endpoints
+* HTTP status codes
+* JSON responses
+* Request validation errors
+* Service interaction
+
+Test classes:
+
+* CourseControllerTest
+* ModuleControllerTest
 
 ---
 
@@ -229,6 +370,25 @@ Response DTO
 Controller
 ```
 
+Testing flow:
+
+```text
+Controller Tests
+    │
+    ▼
+MockMvc + Mocked Service
+
+Service Tests
+    │
+    ▼
+Mockito Repositories + Mockito Mappers
+
+Repository Integration Tests
+    │
+    ▼
+Testcontainers PostgreSQL
+```
+
 ---
 
 ## Current Development Status
@@ -249,14 +409,23 @@ Completed:
 * DTO Pattern
 * MapStruct Integration
 * OpenAPI Documentation
+* Swagger UI Documentation
+* Service Unit Testing
+* Repository Integration Testing
+* Controller Testing
+* Testcontainers PostgreSQL Integration
+* MockMvc REST API Testing
 * Git Flow workflow
 * Pull Request workflow
 * Architecture documentation
+* Authentication Service
+* User Registration
+* User Login
+* JWT Authentication
+* Spring Security Integration
 
 Next Planned Improvements:
 
-* Integration Testing
-* Unit Testing
 * Pagination and Sorting
 * Search Capabilities
 * Note Service implementation
