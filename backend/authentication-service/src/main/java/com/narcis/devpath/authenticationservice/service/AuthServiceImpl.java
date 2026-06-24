@@ -10,8 +10,12 @@ import com.narcis.devpath.authenticationservice.exception.EmailAlreadyExistsExce
 import com.narcis.devpath.authenticationservice.exception.InvalidCredentialsException;
 import com.narcis.devpath.authenticationservice.mapper.UserMapper;
 import com.narcis.devpath.authenticationservice.repository.UserRepository;
+import com.narcis.devpath.authenticationservice.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +31,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final JwtService jwtService;
 
+    private final AuthenticationManager authenticationManager;
+
     @Override
     public RegisterResponseDto register(RegisterRequestDto request) {
         boolean emailExist = userRepository.existsByEmail(request.email());
@@ -40,20 +46,27 @@ public class AuthServiceImpl implements AuthService {
         user.setEnabled(true);
 
         return userMapper.toRegisterResponseDto(userRepository.save(user));
+
     }
 
     @Override
     public LoginResponseDto login(LoginRequestDto request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(InvalidCredentialsException::new);
+        Authentication authentication;
 
-        boolean isValidPassword = passwordEncoder.matches(request.password(), user.getPassword());
-
-        if (!isValidPassword) {
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.email(),
+                            request.password()
+                    )
+            );
+        } catch (AuthenticationException exception) {
             throw new InvalidCredentialsException();
         }
 
-        String token = jwtService.generateToken(user);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        String token = jwtService.generateToken(userDetails.getUser());
 
         return LoginResponseDto.builder()
                 .token(token)
