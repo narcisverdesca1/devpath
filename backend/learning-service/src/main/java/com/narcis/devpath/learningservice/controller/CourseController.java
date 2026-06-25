@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class CourseController {
 
     private final CourseService courseService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new course")
@@ -40,6 +42,7 @@ public class CourseController {
         return courseService.createCourse(courseRequestDto);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     @Operation(summary = "Get all courses")
     @ApiResponse(responseCode = "200", description = "Courses retrieved successfully")
@@ -47,6 +50,7 @@ public class CourseController {
         return courseService.getAllCourses();
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     @Operation(summary = "Get course by id")
     @ApiResponses({
@@ -61,6 +65,7 @@ public class CourseController {
         return courseService.getCourseById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete course by id")
     @ApiResponses({
@@ -75,6 +80,7 @@ public class CourseController {
         courseService.deleteCourse(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "Update course by id")
     @ApiResponses({

@@ -51,6 +51,7 @@ Status:
 
 * Registered in Eureka
 * Routing layer ready
+* Future single entry point for external clients
 
 ---
 
@@ -66,6 +67,8 @@ Technology:
 
 * Spring Boot
 * Spring Web
+* Spring Security
+* JWT
 * Spring Data JPA
 * PostgreSQL
 * Eureka Discovery Client
@@ -108,6 +111,10 @@ Implemented Features:
 * Service Unit Testing
 * Repository Integration Testing
 * Controller Testing
+* JWT Validation
+* Stateless Security
+* Role-based Authorization
+* Method Security with @PreAuthorize
 
 Status:
 
@@ -124,6 +131,9 @@ Status:
 * Service layer tested
 * Repository layer tested with Testcontainers and PostgreSQL
 * Controller layer tested with MockMvc
+* JWT validation verified
+* Role-based authorization verified
+* Protected endpoints verified
 
 ---
 
@@ -132,7 +142,7 @@ Status:
 Port:
 
 ```text
-8082
+8182
 ```
 
 Technology:
@@ -169,6 +179,8 @@ Implemented Features:
 * Global Exception Handling
 * Request Validation
 * Custom UserDetails Implementation
+* Role-based Authorization
+* Method Security with @PreAuthorize
 
 Status:
 
@@ -180,10 +192,70 @@ Status:
 * JWT validation verified
 * Protected endpoint authentication verified
 * SecurityContext population verified
+* Role-based authorization verified
 
-```
+---
+
+## Security Architecture
+
+Authentication and authorization are currently implemented using JWT-based stateless security.
+
+Responsibilities:
+
+### Authentication Service
+
+* Registers users
+* Authenticates users through email and password
+* Assigns user roles
+* Generates signed JWT tokens
+* Stores user credentials and roles in devpath_auth
+
+### Learning Service
+
+* Does not authenticate users through credentials
+* Does not store user passwords
+* Receives JWT tokens through the Authorization header
+* Validates JWT signature and expiration
+* Extracts user email and role from the token
+* Populates the Spring SecurityContext
+* Applies method-level authorization through @PreAuthorize
+
+Current JWT flow:
+
+```text
+Client / Postman
+        │
+        │ POST /auth/login
+        ▼
+Authentication Service
+        │
+        │ Issues signed JWT
+        ▼
+Client / Postman
+        │
+        │ Authorization: Bearer <token>
+        ▼
+Learning Service
+        │
+        │ Validates JWT
+        │ Extracts email and role
+        ▼
+@PreAuthorize
+        │
+        ▼
+Controller Method
 ```
 
+Authorization rules in Learning Service:
+
+```text
+GET    courses/modules    USER or ADMIN
+POST   courses/modules    ADMIN only
+PUT    courses/modules    ADMIN only
+DELETE courses/modules    ADMIN only
+```
+
+---
 
 ## Current Topology
 
@@ -195,7 +267,7 @@ Status:
         ┌───────────────────┼───────────────────┐
         │                   │                   │
   API Gateway      Learning Service   Authentication Service
- localhost:8765     localhost:8081        localhost:8082
+ localhost:8765     localhost:8081        localhost:8182
                             │                   │
                             └─────────┬─────────┘
                                       ▼
@@ -330,7 +402,21 @@ Module
 
 ## Learning Service Internal Architecture
 
+Request flow:
+
 ```text
+HTTP Request
+    │
+    ▼
+JwtAuthenticationFilter
+    │
+    ▼
+SecurityContext
+    │
+    ▼
+@PreAuthorize
+    │
+    ▼
 Controller
     │
     ▼
@@ -422,10 +508,17 @@ Completed:
 * User Registration
 * User Login
 * JWT Authentication
-* Spring Security Integration
+* JWT Authorization
+* Stateless Security
+* Role-based Access Control
+* Method Security
+* Learning Service JWT Validation
+* Learning Service protected endpoints
 
 Next Planned Improvements:
 
+* API Gateway as single external entry point
+* Gateway routing for authentication-service and learning-service
 * Pagination and Sorting
 * Search Capabilities
 * Note Service implementation

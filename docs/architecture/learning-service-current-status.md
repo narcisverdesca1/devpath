@@ -23,6 +23,69 @@ Current implementation includes:
 * Service unit tests
 * Repository integration tests with Testcontainers
 * Controller tests with MockMvc
+* Spring Security integration
+* JWT validation
+* Stateless authentication
+* Role-based authorization
+* Method security with @PreAuthorize
+
+---
+
+## Security
+
+Learning Service is protected using stateless JWT-based security.
+
+Learning Service does not generate JWT tokens and does not authenticate users through email and password.
+
+JWT tokens are issued by Authentication Service and sent to Learning Service through the HTTP Authorization header.
+
+```http
+Authorization: Bearer <token>
+```
+
+### Security Components
+
+* SecurityConfig
+* JwtAuthenticationFilter
+* JwtService
+* JwtServiceImpl
+
+### Responsibilities
+
+* Read the Authorization header
+* Extract the Bearer token
+* Validate JWT signature
+* Validate JWT expiration
+* Extract username/email from the token subject
+* Extract user role from the token claims
+* Convert role into Spring Security authority
+* Populate the Spring SecurityContext
+* Support method-level authorization with @PreAuthorize
+
+### Authorization Rules
+
+```text
+GET    endpoints    USER or ADMIN
+POST   endpoints    ADMIN only
+PUT    endpoints    ADMIN only
+DELETE endpoints    ADMIN only
+```
+
+### Role Mapping
+
+JWT role claim:
+
+```text
+USER
+ADMIN
+```
+
+Spring Security authorities:
+
+```text
+ROLE_USER
+ROLE_ADMIN
+```
 
 ---
 
@@ -257,6 +320,21 @@ Responsibilities:
 * ApiError
 * GlobalExceptionHandler
 
+### Security
+
+* SecurityConfig
+* JwtAuthenticationFilter
+* JwtService
+* JwtServiceImpl
+
+Responsibilities:
+
+* JWT validation
+* Stateless authentication
+* SecurityContext population
+* Role extraction
+* Method authorization support
+
 ---
 
 ## Implemented Endpoints
@@ -264,21 +342,21 @@ Responsibilities:
 ### Course Management
 
 ```http
-POST   /courses
-GET    /courses
-GET    /courses/{id}
-PUT    /courses/{id}
-DELETE /courses/{id}
+POST   /courses                 ADMIN
+GET    /courses                 USER | ADMIN
+GET    /courses/{id}            USER | ADMIN
+PUT    /courses/{id}            ADMIN
+DELETE /courses/{id}            ADMIN
 ```
 
 ### Module Management
 
 ```http
-POST   /courses/{courseId}/modules
-GET    /courses/{courseId}/modules
-GET    /modules/{id}
-PUT    /modules/{id}
-DELETE /modules/{id}
+POST   /courses/{courseId}/modules   ADMIN
+GET    /courses/{courseId}/modules   USER | ADMIN
+GET    /modules/{id}                 USER | ADMIN
+PUT    /modules/{id}                 ADMIN
+DELETE /modules/{id}                 ADMIN
 ```
 
 ---
@@ -398,6 +476,26 @@ Benefits:
 
 ---
 
+## Security Verification
+
+Verified successfully:
+
+* Requests without JWT are rejected
+* Requests with valid JWT are authenticated
+* JWT signature validation
+* JWT expiration validation
+* JwtAuthenticationFilter execution
+* SecurityContext population
+* Role extraction from JWT
+* USER authorization
+* ADMIN authorization
+* USER access to GET endpoints
+* USER denial on POST, PUT and DELETE endpoints
+* ADMIN access to GET, POST, PUT and DELETE endpoints
+* Method security with @PreAuthorize
+
+---
+
 ## Verification Completed
 
 Verified successfully:
@@ -433,6 +531,14 @@ Verified successfully:
 * Controller tests
 * Testcontainers PostgreSQL testing
 * MockMvc REST API testing
+* JWT validation
+* JwtAuthenticationFilter
+* SecurityContext population
+* Role-based authorization
+* Method security
+* USER authorization verified
+* ADMIN authorization verified
+* Unauthorized access verified
 
 ---
 
@@ -443,12 +549,13 @@ Verified successfully:
 * Advanced filtering
 * Test coverage reporting
 * CI pipeline test execution
+* API Gateway integration as single entry point
 
 ---
 
 ## Current Status
 
-Learning Service is fully operational, tested, documented, and registered in Eureka.
+Learning Service is fully operational, tested, documented, registered in Eureka, and protected with JWT-based security.
 
 Implemented features:
 
@@ -469,16 +576,22 @@ Implemented features:
 * Controller Testing
 * Testcontainers Integration
 * MockMvc Testing
+* Spring Security
+* JWT Validation
+* Stateless Authentication
+* JwtAuthenticationFilter
+* Method Security
+* Role-based Authorization
 
 Status:
 
 ```text
-LEARNING SERVICE TESTING COMPLETED
+LEARNING SERVICE SECURITY COMPLETED
 ```
 
 Ready for:
 
-* Authentication Service
+* API Gateway integration
 * Pagination and Sorting
 * Search Capabilities
 * Note Service
