@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class ModuleController {
 
     private final ModuleService moduleService;
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/courses/{courseId}/modules")
     @Operation(summary = "Create a new module for a course")
     @ApiResponses({
@@ -44,6 +45,7 @@ public class ModuleController {
         return moduleService.createModule(courseId, moduleRequestDto);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/courses/{courseId}/modules")
     @Operation(summary = "Get all modules for a course")
     @ApiResponse(responseCode = "200", description = "Modules retrieved successfully")
@@ -51,6 +53,7 @@ public class ModuleController {
         return moduleService.findModulesByCourseId(courseId);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/modules/{id}")
     @Operation(summary = "Get module by id")
     @ApiResponses({
@@ -65,6 +68,7 @@ public class ModuleController {
         return moduleService.findModuleById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/modules/{id}")
     @Operation(summary = "Update module by id")
     @ApiResponses({
@@ -85,6 +89,7 @@ public class ModuleController {
         return moduleService.updateModuleById(id, moduleRequestDto);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/modules/{id}")
     @Operation(summary = "Delete module by id")
     @ApiResponses({
