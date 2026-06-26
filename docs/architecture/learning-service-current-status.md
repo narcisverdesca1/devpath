@@ -43,6 +43,8 @@ JWT tokens are issued by Authentication Service and sent to Learning Service thr
 Authorization: Bearer <token>
 ```
 
+Learning Service validates the JWT locally and uses the role claim to authorize access to protected endpoints.
+
 ### Security Components
 
 * SecurityConfig
@@ -89,251 +91,60 @@ ROLE_ADMIN
 
 ---
 
-## Testing
+## Integration With Authentication Service
 
-Testing has been implemented across the main application layers.
+Learning Service trusts JWT tokens issued by Authentication Service.
 
-### Service Tests
+Authentication is delegated to Authentication Service.
 
-Implemented using:
+Authorization is performed locally inside Learning Service using Spring Security.
 
-* JUnit 5
-* Mockito
-* AssertJ
+Learning Service does not:
 
-Covered classes:
+* store user credentials
+* validate passwords
+* query the authentication database
+* generate JWT tokens
 
-* CourseServiceTest
-* ModuleServiceTest
+Learning Service does:
 
-Covered scenarios:
-
-* create operations
-* find all operations
-* find by id operations
-* update operations
-* delete operations
-* resource not found cases
-* mapper interaction
-* repository interaction
-
-### Repository Integration Tests
-
-Implemented using:
-
-* Spring Boot Test
-* Testcontainers
-* PostgreSQL
-* JPA repositories
-
-Covered classes:
-
-* CourseRepositoryIT
-* ModuleRepositoryIT
-
-Covered scenarios:
-
-* entity persistence
-* entity retrieval
-* custom query methods
-* Course → Module relationship
-* PostgreSQL integration
-
-### Controller Tests
-
-Implemented using:
-
-* WebMvcTest
-* MockMvc
-* MockitoBean
-* ObjectMapper
-
-Covered classes:
-
-* CourseControllerTest
-* ModuleControllerTest
-
-Covered scenarios:
-
-* HTTP status codes
-* JSON response structure
-* request validation errors
-* create endpoints
-* read endpoints
-* update endpoints
-* delete endpoints
-* service interaction
+* receive JWT tokens through the Authorization header
+* validate JWT signature and expiration
+* extract email and role
+* populate SecurityContext
+* enforce role-based rules with @PreAuthorize
 
 ---
 
-## Domain Model
+## API Gateway Preparation
 
-### Course
+The next architecture step is to route Learning Service requests through API Gateway.
 
-Fields:
-
-* id
-* title
-* description
-* difficulty
-* createdAt
-* updatedAt
-
-Validation:
-
-* title required
-* title max 100 characters
-* description max 1000 characters
-* difficulty required
-* difficulty max 50 characters
-
-### Module
-
-Fields:
-
-* id
-* title
-* description
-* position
-
-Validation:
-
-* title required
-* title max 100 characters
-* description max 1000 characters
-* position required
-* position >= 0
-
----
-
-## Relationships
-
-### Course (1) → (N) Module
-
-The Learning Service currently models a one-to-many relationship between Course and Module.
-
-### Course Mapping
+Current direct access:
 
 ```text
-@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<Module> modules;
+Client
+        │
+        │ Authorization: Bearer <token>
+        ▼
+Learning Service
 ```
 
-### Module Mapping
+Target access through API Gateway:
 
 ```text
-@ManyToOne
-@JoinColumn(name = "course_id")
-@JsonIgnore
-private Course course;
+Client
+        │
+        │ Authorization: Bearer <token>
+        ▼
+API Gateway
+        │
+        │ forwards Authorization header
+        ▼
+Learning Service
 ```
 
-Generated foreign key:
-
-```text
-module.course_id -> course.id
-```
-
----
-
-## Persistence
-
-Database:
-
-```text
-devpath_learning
-```
-
-Hibernate configuration:
-
-```properties
-spring.jpa.hibernate.ddl-auto=update
-```
-
-Generated tables:
-
-```text
-course
-module
-```
-
-Persistence was verified through PostgreSQL inspection and repository integration tests.
-
----
-
-## Implemented Layers
-
-### Repository
-
-* CourseRepository
-* ModuleRepository
-
-### Service
-
-* CourseService
-* ModuleService
-
-### Controller
-
-* CourseController
-* ModuleController
-
-### DTO
-
-#### Request DTOs
-
-* CourseRequestDto
-* ModuleRequestDto
-
-#### Response DTOs
-
-* CourseResponseDto
-* ModuleResponseDto
-
-### Mapper
-
-Implemented using MapStruct.
-
-#### Request Mappers
-
-* CourseRequestMapper
-* ModuleRequestMapper
-
-Responsibilities:
-
-* Request DTO → Entity conversion
-* Entity update through @MappingTarget
-
-#### Response Mappers
-
-* CourseResponseMapper
-* ModuleResponseMapper
-
-Responsibilities:
-
-* Entity → Response DTO conversion
-* Collection mapping support
-
-### Exception Handling
-
-* ResourceNotFoundException
-* ApiError
-* GlobalExceptionHandler
-
-### Security
-
-* SecurityConfig
-* JwtAuthenticationFilter
-* JwtService
-* JwtServiceImpl
-
-Responsibilities:
-
-* JWT validation
-* Stateless authentication
-* SecurityContext population
-* Role extraction
-* Method authorization support
+Learning Service will continue validating JWT tokens locally after receiving requests from the gateway.
 
 ---
 
@@ -361,121 +172,6 @@ DELETE /modules/{id}                 ADMIN
 
 ---
 
-## OpenAPI Documentation
-
-API documentation is implemented using SpringDoc OpenAPI.
-
-Configuration:
-
-* OpenApiConfig
-* Swagger UI
-* OpenAPI 3 specification generation
-
-Documentation annotations currently used:
-
-* @Tag
-* @Operation
-* @ApiResponse
-* @ApiResponses
-* @Schema
-
-Documented Components:
-
-### Controllers
-
-* CourseController
-* ModuleController
-
-### DTOs
-
-* CourseRequestDto
-* CourseResponseDto
-* ModuleRequestDto
-* ModuleResponseDto
-
-### Error Responses
-
-* 400 Bad Request
-* 404 Not Found
-
-Benefits:
-
-* Self-documenting APIs
-* Interactive API exploration
-* Faster frontend integration
-* Reduced documentation drift
-* Consistent API contracts
-
----
-
-## Global Exception Handling
-
-A centralized exception handling mechanism has been implemented using:
-
-```text
-@RestControllerAdvice
-```
-
-Implemented handlers:
-
-* ResourceNotFoundException → 404 Not Found
-* MethodArgumentNotValidException → 400 Bad Request
-
-Standard error response model:
-
-```json
-{
-  "timestamp": "2026-06-19T10:00:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Title is required"
-}
-```
-
----
-
-## Request Validation
-
-Validation is implemented using Jakarta Bean Validation.
-
-Annotations currently used:
-
-* @Valid
-* @NotBlank
-* @Size
-* @NotNull
-* @PositiveOrZero
-
----
-
-## DTO Pattern
-
-The application no longer exposes JPA entities directly through REST APIs.
-
-REST endpoints communicate through dedicated request and response DTOs.
-
-Benefits:
-
-* Clear separation between persistence and API contracts
-* Safer API evolution
-* Reduced coupling
-* Improved maintainability
-
----
-
-## MapStruct Integration
-
-Object mapping is handled through MapStruct.
-
-Benefits:
-
-* Reduced boilerplate code
-* Centralized mapping logic
-* Compile-time mapper generation
-* Cleaner service layer
-
----
-
 ## Security Verification
 
 Verified successfully:
@@ -493,52 +189,8 @@ Verified successfully:
 * USER denial on POST, PUT and DELETE endpoints
 * ADMIN access to GET, POST, PUT and DELETE endpoints
 * Method security with @PreAuthorize
-
----
-
-## Verification Completed
-
-Verified successfully:
-
-* Spring Boot startup
-* Eureka registration
-* PostgreSQL connectivity
-* Hibernate schema generation
-* Repository layer
-* Service layer
-* REST controller layer
-* Postman testing
-* Course CRUD operations
-* Module CRUD operations
-* Course → Module relationship
-* Foreign key generation
-* Relationship persistence in PostgreSQL
-* Global exception handling
-* Request validation
-* DTO request validation flow
-* DTO response mapping
-* MapStruct integration
-* Entity isolation from REST APIs
-* Swagger UI accessibility
-* OpenAPI specification generation
-* Controller documentation rendering
-* DTO schema rendering
-* Error response documentation
-* 404 responses for missing resources
-* 400 responses for invalid requests
-* Service unit tests
-* Repository integration tests
-* Controller tests
-* Testcontainers PostgreSQL testing
-* MockMvc REST API testing
-* JWT validation
-* JwtAuthenticationFilter
-* SecurityContext population
-* Role-based authorization
-* Method security
-* USER authorization verified
-* ADMIN authorization verified
-* Unauthorized access verified
+* JWT issued by Authentication Service is accepted by Learning Service
+* Authorization header propagation verified manually with Postman
 
 ---
 
@@ -582,6 +234,7 @@ Implemented features:
 * JwtAuthenticationFilter
 * Method Security
 * Role-based Authorization
+* JWT validation of tokens issued by Authentication Service
 
 Status:
 

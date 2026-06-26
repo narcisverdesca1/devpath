@@ -2,7 +2,7 @@
 
 ## Overview
 
-Authentication Service is responsible for user authentication and authorization within DevPath.
+Authentication Service is responsible for user authentication and JWT issuing within DevPath.
 
 Current implementation includes:
 
@@ -12,11 +12,17 @@ Current implementation includes:
 * User login
 * BCrypt password hashing
 * JWT authentication
+* JWT generation
 * Spring Security integration
 * Global exception handling
 * Request validation
 * Custom UserDetails implementation
 * Stateless authentication
+* Role-based authorization
+
+Authentication Service is the only service responsible for validating user credentials.
+
+Other services, such as Learning Service, trust JWT tokens issued by Authentication Service and validate them locally.
 
 ---
 
@@ -83,6 +89,49 @@ Components:
 * AuthenticationManager
 * PasswordEncoder (BCrypt)
 
+Responsibilities:
+
+* Authenticate users with email and password
+* Validate credentials through Spring Security
+* Hash passwords with BCrypt
+* Generate signed JWT tokens
+* Include user identity and role inside JWT claims
+* Protect internal authentication-service endpoints when required
+* Populate SecurityContext for protected authentication-service endpoints
+
+---
+
+## JWT Issuer Responsibility
+
+Authentication Service acts as the JWT issuer for DevPath.
+
+It generates JWT tokens consumed by:
+
+* Learning Service
+
+Future consumers:
+
+* API Gateway
+* Note Service
+* Other DevPath domain services
+
+JWT tokens are transported through the standard HTTP header:
+
+```http
+Authorization: Bearer <token>
+```
+
+JWT claims:
+
+* sub → user email
+* role → user role
+* iat → issued at
+* exp → expiration date
+
+Authentication Service signs the JWT using the configured secret key.
+
+The secret key is never sent to clients.
+
 ---
 
 ## Registration Flow
@@ -116,7 +165,7 @@ BCrypt password verification
         ↓
 JWT generation
         ↓
-Response DTO
+Response DTO with access token
 ```
 
 ---
@@ -124,25 +173,41 @@ Response DTO
 ## JWT Flow
 
 ```text
-Request
-        ↓
-Authorization: Bearer <token>
-        ↓
-JwtAuthenticationFilter
-        ↓
-JWT validation
-        ↓
-SecurityContext population
-        ↓
+Client
+        │
+        │ POST /auth/login
+        ▼
+Authentication Service
+        │
+        │ Generates signed JWT
+        ▼
+Client
+        │
+        │ Authorization: Bearer <token>
+        ▼
+Protected DevPath Service
+        │
+        │ Validates JWT locally
+        ▼
 Protected endpoint access
 ```
 
-JWT Claims:
+---
 
-* sub (email)
-* role
-* iat
-* exp
+## Integration With Learning Service
+
+Learning Service does not authenticate users with email and password.
+
+Instead:
+
+* Authentication Service verifies credentials.
+* Authentication Service issues a signed JWT.
+* Client sends the JWT to Learning Service.
+* Learning Service validates the JWT signature and expiration.
+* Learning Service extracts email and role.
+* Learning Service applies authorization using Spring Security.
+
+This keeps authentication centralized and allows Learning Service to remain stateless.
 
 ---
 
@@ -183,11 +248,14 @@ Verified successfully:
 * Email uniqueness validation
 * BCrypt password hashing
 * User persistence
+* User login
 * JWT generation
 * JWT validation
 * Protected endpoint authentication
 * SecurityContext population
 * Stateless authentication
+* Role claim generation
+* JWT usage by Learning Service
 
 ---
 
@@ -196,8 +264,10 @@ Verified successfully:
 * JWT unit tests
 * Controller tests
 * Refresh tokens
-* Role-based authorization
 * API Gateway JWT propagation
+* Secret externalization through environment variables
+* Token revocation strategy
+* Asymmetric JWT signing with private/public key pair
 
 ---
 
@@ -211,10 +281,13 @@ Implemented features:
 * User Login
 * BCrypt Password Hashing
 * JWT Authentication
+* JWT Generation
 * Spring Security Integration
 * Stateless Security
+* Role-based Authorization
 * Global Exception Handling
 * Validation Layer
+* JWT Issuer for Learning Service
 
 Status:
 
@@ -224,6 +297,7 @@ JWT AUTHENTICATION COMPLETED
 
 Ready for:
 
-* Authentication Tests
-* Authorization (ROLE_USER / ROLE_ADMIN)
 * API Gateway Integration
+* JWT propagation through API Gateway
+* Authentication Tests
+* Refresh Token Strategy

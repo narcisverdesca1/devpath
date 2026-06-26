@@ -53,6 +53,75 @@ Status:
 * Routing layer ready
 * Future single entry point for external clients
 
+Future responsibilities:
+
+* Route `/auth/**` requests to Authentication Service
+* Route `/courses/**` requests to Learning Service
+* Route `/modules/**` requests to Learning Service
+* Forward the `Authorization` header to downstream services
+* Hide internal service ports from clients
+
+---
+
+### Authentication Service
+
+Port:
+
+```text
+8182
+```
+
+Technology:
+
+* Spring Boot
+* Spring Security
+* JWT
+* Spring Data JPA
+* PostgreSQL
+* BCrypt
+* MapStruct
+
+Database:
+
+```text
+devpath_auth
+```
+
+Domain Model:
+
+```text
+User
+```
+
+Implemented Features:
+
+* User Registration
+* User Login
+* BCrypt Password Hashing
+* JWT Generation
+* JWT Validation
+* Stateless Authentication
+* Spring Security Integration
+* Global Exception Handling
+* Request Validation
+* Custom UserDetails Implementation
+* Role-based Authorization
+* Method Security with @PreAuthorize
+* JWT issuer for DevPath services
+
+Status:
+
+* Registered in Eureka
+* Connected to PostgreSQL
+* Registration verified
+* Login verified
+* JWT generation verified
+* JWT validation verified
+* Protected endpoint authentication verified
+* SecurityContext population verified
+* Role-based authorization verified
+* JWT consumed by Learning Service
+
 ---
 
 ### Learning Service
@@ -137,90 +206,49 @@ Status:
 
 ---
 
-### Authentication Service
-
-Port:
-
-```text
-8182
-```
-
-Technology:
-
-* Spring Boot
-* Spring Security
-* JWT
-* Spring Data JPA
-* PostgreSQL
-* BCrypt
-* MapStruct
-
-Database:
-
-```text
-devpath_auth
-```
-
-Domain Model:
-
-```text
-User
-```
-
-Implemented Features:
-
-* User Registration
-* User Login
-* BCrypt Password Hashing
-* JWT Generation
-* JWT Validation
-* Stateless Authentication
-* Spring Security Integration
-* Global Exception Handling
-* Request Validation
-* Custom UserDetails Implementation
-* Role-based Authorization
-* Method Security with @PreAuthorize
-
-Status:
-
-* Registered in Eureka
-* Connected to PostgreSQL
-* Registration verified
-* Login verified
-* JWT generation verified
-* JWT validation verified
-* Protected endpoint authentication verified
-* SecurityContext population verified
-* Role-based authorization verified
-
----
-
 ## Security Architecture
 
-Authentication and authorization are currently implemented using JWT-based stateless security.
-
-Responsibilities:
+Authentication and authorization are implemented using JWT-based stateless security.
 
 ### Authentication Service
+
+Responsibilities:
 
 * Registers users
 * Authenticates users through email and password
 * Assigns user roles
 * Generates signed JWT tokens
 * Stores user credentials and roles in devpath_auth
+* Acts as JWT issuer for protected DevPath services
 
 ### Learning Service
 
+Responsibilities:
+
 * Does not authenticate users through credentials
 * Does not store user passwords
-* Receives JWT tokens through the Authorization header
+* Receives JWT tokens through the `Authorization` header
 * Validates JWT signature and expiration
 * Extracts user email and role from the token
 * Populates the Spring SecurityContext
 * Applies method-level authorization through @PreAuthorize
 
-Current JWT flow:
+### API Gateway
+
+Current status:
+
+* Registered in Eureka
+* Routing layer available
+
+Next responsibility:
+
+* Become the single external entry point
+* Route authentication and learning requests
+* Forward JWT tokens through the `Authorization` header to downstream services
+
+---
+
+## Current JWT Flow
 
 ```text
 Client / Postman
@@ -257,6 +285,41 @@ DELETE courses/modules    ADMIN only
 
 ---
 
+## Target Gateway Flow
+
+The next architecture step is to introduce API Gateway as the only entry point for clients.
+
+```text
+Client / Frontend
+        │
+        ▼
+API Gateway
+        │
+        ├── /auth/**          → Authentication Service
+        ├── /courses/**       → Learning Service
+        └── /modules/**       → Learning Service
+```
+
+JWT propagation through the gateway:
+
+```text
+Client
+        │
+        │ Authorization: Bearer <token>
+        ▼
+API Gateway
+        │
+        │ forwards Authorization header
+        ▼
+Learning Service
+        │
+        │ validates JWT locally
+        ▼
+Protected endpoint
+```
+
+---
+
 ## Current Topology
 
 ```text
@@ -281,202 +344,6 @@ DELETE courses/modules    ADMIN only
 
 ---
 
-## API Documentation Layer
-
-Technology:
-
-* SpringDoc OpenAPI
-* Swagger UI
-
-Responsibilities:
-
-* Automatic OpenAPI specification generation
-* Interactive API documentation
-* DTO schema generation
-* Validation documentation
-* Error response documentation
-
-Documented Components:
-
-* CourseController
-* ModuleController
-* Request DTOs
-* Response DTOs
-* ApiError
-
----
-
-## Testing Strategy
-
-Learning Service is tested across controller, service, and repository layers.
-
-### Service Layer Testing
-
-Technology:
-
-* JUnit 5
-* Mockito
-* AssertJ
-
-Scope:
-
-* Business logic
-* Repository interaction
-* Mapper interaction
-* Success scenarios
-* Resource not found scenarios
-
-Test classes:
-
-* CourseServiceTest
-* ModuleServiceTest
-
-### Repository Integration Testing
-
-Technology:
-
-* Spring Boot Test
-* Testcontainers
-* PostgreSQL
-
-Scope:
-
-* Entity persistence
-* Entity retrieval
-* Custom repository queries
-* Course → Module relationship
-* PostgreSQL integration
-
-Test classes:
-
-* CourseRepositoryIT
-* ModuleRepositoryIT
-
-### Controller Testing
-
-Technology:
-
-* WebMvcTest
-* MockMvc
-* MockitoBean
-* ObjectMapper
-
-Scope:
-
-* REST endpoints
-* HTTP status codes
-* JSON responses
-* Request validation errors
-* Service interaction
-
-Test classes:
-
-* CourseControllerTest
-* ModuleControllerTest
-
----
-
-## Learning Service Domain Model
-
-```text
-Course
-│
-├── id
-├── title
-├── description
-├── difficulty
-├── createdAt
-└── updatedAt
-│
-└── 1..N
-      │
-      ▼
-Module
-├── id
-├── title
-├── description
-└── position
-```
-
----
-
-## Learning Service Internal Architecture
-
-Request flow:
-
-```text
-HTTP Request
-    │
-    ▼
-JwtAuthenticationFilter
-    │
-    ▼
-SecurityContext
-    │
-    ▼
-@PreAuthorize
-    │
-    ▼
-Controller
-    │
-    ▼
-Request DTO
-    │
-    ▼
-Service Layer
-    │
-    ▼
-Request Mapper (MapStruct)
-    │
-    ▼
-Entity
-    │
-    ▼
-Repository
-    │
-    ▼
-PostgreSQL
-```
-
-Response flow:
-
-```text
-PostgreSQL
-    │
-    ▼
-Entity
-    │
-    ▼
-Response Mapper (MapStruct)
-    │
-    ▼
-Response DTO
-    │
-    ▼
-Controller
-```
-
-Testing flow:
-
-```text
-Controller Tests
-    │
-    ▼
-MockMvc + Mocked Service
-
-Service Tests
-    │
-    ▼
-Mockito Repositories + Mockito Mappers
-
-Repository Integration Tests
-    │
-    ▼
-Testcontainers PostgreSQL
-```
-
----
-
 ## Current Development Status
 
 Completed:
@@ -485,7 +352,7 @@ Completed:
 * Docker environment
 * PostgreSQL integration
 * Eureka Service Discovery
-* API Gateway setup
+* API Gateway base setup
 * Learning Service
 * Course CRUD
 * Module CRUD
@@ -499,11 +366,6 @@ Completed:
 * Service Unit Testing
 * Repository Integration Testing
 * Controller Testing
-* Testcontainers PostgreSQL Integration
-* MockMvc REST API Testing
-* Git Flow workflow
-* Pull Request workflow
-* Architecture documentation
 * Authentication Service
 * User Registration
 * User Login
@@ -514,11 +376,13 @@ Completed:
 * Method Security
 * Learning Service JWT Validation
 * Learning Service protected endpoints
+* JWT propagation concept documented
 
 Next Planned Improvements:
 
 * API Gateway as single external entry point
 * Gateway routing for authentication-service and learning-service
+* Authorization header forwarding through API Gateway
 * Pagination and Sorting
 * Search Capabilities
 * Note Service implementation
