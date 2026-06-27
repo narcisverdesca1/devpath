@@ -1,5 +1,21 @@
 # Current Architecture
 
+## Overview
+
+DevPath is a microservices-based learning platform built with Spring Boot and Spring Cloud.
+
+The current architecture consists of:
+
+* PostgreSQL
+* Eureka Service Discovery
+* API Gateway
+* Authentication Service
+* Learning Service
+
+API Gateway acts as the single external entry point while Authentication Service and Learning Service remain independent microservices.
+
+---
+
 ## Infrastructure
 
 ### PostgreSQL 17 (Docker)
@@ -12,377 +28,367 @@ Databases:
 
 ---
 
-## Services
+## Service Topology
 
-### Naming Server
+```text
+                          Eureka Server
+                         localhost:8761
+                                ▲
+                                │
+        ┌───────────────────────┼────────────────────────┐
+        │                       │                        │
+        ▼                       ▼                        ▼
+   API Gateway        Authentication Service     Learning Service
+   localhost:8765        localhost:8182           localhost:8081
+        │                       │                        │
+        │                       └──────────────┐         │
+        │                                      │         │
+        └──────────────────────┬───────────────┘         │
+                               ▼                         ▼
+                      PostgreSQL 17 (Docker)
+                         localhost:5432
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+   devpath_auth       devpath_learning       devpath_note
+```
 
-Port:
+---
+
+# Services
+
+## Naming Server
+
+Port
 
 ```text
 8761
 ```
 
-Technology:
+Technology
 
 * Spring Boot
-* Eureka Server
+* Netflix Eureka Server
 
-Status:
+Responsibilities
+
+* Service Discovery
+* Service Registration
+* Dynamic service lookup
+
+Status
 
 * Running
-* Service Discovery enabled
+* Verified
 
 ---
 
-### API Gateway
+## API Gateway
 
-Port:
+Port
 
 ```text
 8765
 ```
 
-Technology:
+Technology
 
+* Spring Boot
 * Spring Cloud Gateway
+* Spring Cloud LoadBalancer
 * Eureka Discovery Client
 
-Status:
+Responsibilities
+
+* Single external entry point
+* Dynamic routing
+* Service Discovery
+* HTTP request forwarding
+* Authorization header propagation
+* Hide internal service addresses
+
+Implemented
+
+* Eureka Registration
+* Dynamic Route Configuration
+* Authentication Service routing
+* Learning Service routing
+* JWT header propagation
+
+Configured Routes
+
+```text
+/auth/**               → authentication-service
+/courses/**            → learning-service
+/modules/**            → learning-service
+```
+
+Status
 
 * Registered in Eureka
-* Routing layer ready
-* Future single entry point for external clients
-
-Future responsibilities:
-
-* Route `/auth/**` requests to Authentication Service
-* Route `/courses/**` requests to Learning Service
-* Route `/modules/**` requests to Learning Service
-* Forward the `Authorization` header to downstream services
-* Hide internal service ports from clients
+* Routing verified
+* JWT propagation verified
+* End-to-end communication verified
 
 ---
 
-### Authentication Service
+## Authentication Service
 
-Port:
+Port
 
 ```text
 8182
 ```
 
-Technology:
+Technology
 
 * Spring Boot
 * Spring Security
-* JWT
 * Spring Data JPA
 * PostgreSQL
+* JWT
 * BCrypt
 * MapStruct
 
-Database:
+Database
 
 ```text
 devpath_auth
 ```
 
-Domain Model:
+Domain Model
 
 ```text
 User
 ```
 
-Implemented Features:
+Responsibilities
 
 * User Registration
 * User Login
-* BCrypt Password Hashing
+* Password Hashing
 * JWT Generation
 * JWT Validation
-* Stateless Authentication
-* Spring Security Integration
-* Global Exception Handling
-* Request Validation
-* Custom UserDetails Implementation
-* Role-based Authorization
-* Method Security with @PreAuthorize
-* JWT issuer for DevPath services
+* User Authentication
 
-Status:
+Implemented
+
+* Register
+* Login
+* BCrypt
+* AuthenticationManager
+* JwtService
+* CustomUserDetailsService
+* Stateless Security
+* Method Security
+* Role-Based Authorization
+
+Status
 
 * Registered in Eureka
 * Connected to PostgreSQL
-* Registration verified
-* Login verified
-* JWT generation verified
-* JWT validation verified
-* Protected endpoint authentication verified
-* SecurityContext population verified
-* Role-based authorization verified
-* JWT consumed by Learning Service
+* JWT issuer for DevPath
+* Fully verified
 
 ---
 
-### Learning Service
+## Learning Service
 
-Port:
+Port
 
 ```text
 8081
 ```
 
-Technology:
+Technology
 
 * Spring Boot
-* Spring Web
 * Spring Security
-* JWT
 * Spring Data JPA
 * PostgreSQL
 * Eureka Discovery Client
-* Jakarta Bean Validation
 * MapStruct
 * SpringDoc OpenAPI
 * Swagger UI
 * JUnit 5
 * Mockito
-* AssertJ
 * MockMvc
 * Testcontainers
 
-Database:
+Database
 
 ```text
 devpath_learning
 ```
 
-Domain Model:
+Domain Model
 
 ```text
 Course
  └── Module
 ```
 
-Implemented Features:
+Responsibilities
+
+* Course Management
+* Module Management
+* JWT Validation
+* Authorization
+
+Implemented
 
 * Course CRUD
 * Module CRUD
-* Course → Module relationship
-* Hibernate automatic schema generation
-* PostgreSQL persistence
-* Global Exception Handling
-* Request Validation
 * DTO Pattern
-* MapStruct Mapping Layer
-* OpenAPI Documentation
-* Swagger UI Integration
-* Service Unit Testing
-* Repository Integration Testing
-* Controller Testing
+* Bean Validation
+* Global Exception Handling
+* MapStruct
+* OpenAPI
+* Swagger
+* Unit Tests
+* Repository Tests
+* Controller Tests
 * JWT Validation
-* Stateless Security
-* Role-based Authorization
-* Method Security with @PreAuthorize
+* Stateless Authentication
+* Role-Based Authorization
+* Method Security
 
-Status:
+Status
 
 * Registered in Eureka
 * Connected to PostgreSQL
-* Actuator enabled
-* CRUD operations verified
-* Relationship persistence verified
-* Validation verified
-* Exception handling verified
-* DTO mapping verified
-* OpenAPI documentation verified
-* Swagger UI verified
-* Service layer tested
-* Repository layer tested with Testcontainers and PostgreSQL
-* Controller layer tested with MockMvc
-* JWT validation verified
-* Role-based authorization verified
-* Protected endpoints verified
+* Fully verified
 
 ---
 
-## Security Architecture
+# Security Architecture
 
-Authentication and authorization are implemented using JWT-based stateless security.
+DevPath currently follows a distributed security architecture.
 
-### Authentication Service
+Authentication Service is responsible for authenticating users and issuing JWT tokens.
 
-Responsibilities:
+Learning Service is responsible for validating JWT tokens and authorizing requests.
 
-* Registers users
-* Authenticates users through email and password
-* Assigns user roles
-* Generates signed JWT tokens
-* Stores user credentials and roles in devpath_auth
-* Acts as JWT issuer for protected DevPath services
-
-### Learning Service
-
-Responsibilities:
-
-* Does not authenticate users through credentials
-* Does not store user passwords
-* Receives JWT tokens through the `Authorization` header
-* Validates JWT signature and expiration
-* Extracts user email and role from the token
-* Populates the Spring SecurityContext
-* Applies method-level authorization through @PreAuthorize
-
-### API Gateway
-
-Current status:
-
-* Registered in Eureka
-* Routing layer available
-
-Next responsibility:
-
-* Become the single external entry point
-* Route authentication and learning requests
-* Forward JWT tokens through the `Authorization` header to downstream services
+API Gateway only routes requests and forwards the Authorization header.
 
 ---
 
-## Current JWT Flow
+## Authentication Flow
 
 ```text
-Client / Postman
-        │
-        │ POST /auth/login
-        ▼
-Authentication Service
-        │
-        │ Issues signed JWT
-        ▼
-Client / Postman
-        │
-        │ Authorization: Bearer <token>
-        ▼
-Learning Service
-        │
-        │ Validates JWT
-        │ Extracts email and role
-        ▼
-@PreAuthorize
-        │
-        ▼
-Controller Method
-```
-
-Authorization rules in Learning Service:
-
-```text
-GET    courses/modules    USER or ADMIN
-POST   courses/modules    ADMIN only
-PUT    courses/modules    ADMIN only
-DELETE courses/modules    ADMIN only
+                 Client
+                    │
+                    │ POST /auth/login
+                    ▼
+              API Gateway
+                    │
+                    ▼
+       Authentication Service
+                    │
+            Validate credentials
+                    │
+                    ▼
+              Generate JWT
+                    │
+                    ▼
+                 Client
 ```
 
 ---
 
-## Target Gateway Flow
-
-The next architecture step is to introduce API Gateway as the only entry point for clients.
+## Protected Request Flow
 
 ```text
-Client / Frontend
-        │
-        ▼
-API Gateway
-        │
-        ├── /auth/**          → Authentication Service
-        ├── /courses/**       → Learning Service
-        └── /modules/**       → Learning Service
-```
-
-JWT propagation through the gateway:
-
-```text
-Client
-        │
-        │ Authorization: Bearer <token>
-        ▼
-API Gateway
-        │
-        │ forwards Authorization header
-        ▼
-Learning Service
-        │
-        │ validates JWT locally
-        ▼
-Protected endpoint
+                 Client
+                    │
+Authorization: Bearer <JWT>
+                    │
+                    ▼
+              API Gateway
+                    │
+        Authorization Header
+          forwarded unchanged
+                    │
+                    ▼
+            Learning Service
+                    │
+        JwtAuthenticationFilter
+                    │
+          SecurityContext
+                    │
+            @PreAuthorize
+                    │
+                    ▼
+               Controller
 ```
 
 ---
 
-## Current Topology
+## Authorization Rules
+
+Learning Service applies role-based authorization.
 
 ```text
-                      Eureka Server
-                     localhost:8761
-                            ▲
-                            │
-        ┌───────────────────┼───────────────────┐
-        │                   │                   │
-  API Gateway      Learning Service   Authentication Service
- localhost:8765     localhost:8081        localhost:8182
-                            │                   │
-                            └─────────┬─────────┘
-                                      ▼
-                               PostgreSQL 17
-                               localhost:5432
-                                      │
-          ┌───────────────┬───────────┴───────────┐
-          │               │                       │
-  devpath_learning   devpath_note          devpath_auth
+GET      USER | ADMIN
+POST     ADMIN
+PUT      ADMIN
+DELETE   ADMIN
 ```
 
 ---
 
 ## Current Development Status
 
-Completed:
+Completed
 
-* Infrastructure setup
-* Docker environment
-* PostgreSQL integration
-* Eureka Service Discovery
-* API Gateway base setup
-* Learning Service
-* Course CRUD
-* Module CRUD
-* JPA relationships
-* Global Exception Handling
-* Request Validation
-* DTO Pattern
-* MapStruct Integration
-* OpenAPI Documentation
-* Swagger UI Documentation
-* Service Unit Testing
-* Repository Integration Testing
-* Controller Testing
-* Authentication Service
+### Infrastructure
+
+* Docker
+* PostgreSQL
+* Eureka Server
+* API Gateway
+
+### Authentication
+
 * User Registration
 * User Login
 * JWT Authentication
-* JWT Authorization
-* Stateless Security
-* Role-based Access Control
-* Method Security
-* Learning Service JWT Validation
-* Learning Service protected endpoints
-* JWT propagation concept documented
+* JWT Generation
+* JWT Validation
+* Spring Security
+* Role-Based Authorization
 
-Next Planned Improvements:
+### Learning
 
-* API Gateway as single external entry point
-* Gateway routing for authentication-service and learning-service
-* Authorization header forwarding through API Gateway
-* Pagination and Sorting
-* Search Capabilities
-* Note Service implementation
+* Course CRUD
+* Module CRUD
+* DTO Pattern
+* MapStruct
+* Bean Validation
+* Global Exception Handling
+* OpenAPI
+* Swagger
+* Unit Tests
+* Repository Tests
+* Controller Tests
+* JWT Validation
+* Stateless Authentication
+
+### Gateway
+
+* Dynamic Routing
+* Service Discovery
+* JWT Header Propagation
+* End-to-End Routing Verification
+
+---
+
+## Next Planned Improvements
+
+* Gateway Global Filters
+* Logging
+* Rate Limiting
+* Circuit Breaker
+* Pagination
+* Search
+* Note Service
