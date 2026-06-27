@@ -2,31 +2,32 @@
 
 ## Overview
 
-API Gateway is responsible for becoming the single external entry point for DevPath.
+API Gateway is the single external entry point for DevPath.
 
-The service is already present in the architecture and registered in Eureka.
+It is responsible for routing incoming client requests to the appropriate downstream microservice while hiding the internal architecture from external consumers.
 
-Current implementation provides the base routing layer. The next development step is to configure routes toward Authentication Service and Learning Service.
+API Gateway is registered in Eureka and uses Spring Cloud Gateway with Service Discovery for dynamic routing.
 
 ---
 
-## Purpose
+## Responsibilities
 
-API Gateway will centralize client access to backend services.
+Current responsibilities:
 
-Target client flow:
+* Register itself in Eureka
+* Route client requests to downstream services
+* Resolve service instances through Eureka
+* Forward HTTP requests transparently
+* Preserve request headers, including `Authorization`
 
-```text
-Client / Frontend
-        │
-        ▼
-API Gateway
-        │
-        ├── Authentication Service
-        └── Learning Service
-```
+Future responsibilities:
 
-The client should no longer call internal services directly.
+* Logging
+* CORS centralization
+* Rate Limiting
+* Circuit Breaker
+* Request filtering
+* Centralized security policies
 
 ---
 
@@ -34,6 +35,7 @@ The client should no longer call internal services directly.
 
 * Spring Boot
 * Spring Cloud Gateway
+* Spring Cloud LoadBalancer
 * Eureka Discovery Client
 
 ---
@@ -46,167 +48,167 @@ The client should no longer call internal services directly.
 
 ---
 
-## Service Discovery
+## Route Configuration
 
-API Gateway is registered in Eureka.
-
-Eureka Server:
-
-```text
-localhost:8761
-```
-
-Gateway:
-
-```text
-localhost:8765
-```
-
----
-
-## Current Status
-
-Implemented:
-
-* API Gateway service
-* Eureka registration
-* Basic routing layer availability
-
-Not yet implemented:
-
-* Final route configuration for Authentication Service
-* Final route configuration for Learning Service
-* Gateway-based client access
-* Authorization header forwarding verification
-
----
-
-## Target Routes
-
-Planned routes:
+Implemented routes:
 
 ```text
 /auth/**               → authentication-service
 /courses/**            → learning-service
 /modules/**            → learning-service
-/courses/*/modules/**  → learning-service
 ```
 
-Alternative future route style:
+Routing uses Service Discovery.
+
+Instead of using fixed URLs:
 
 ```text
-/api/auth/**      → authentication-service
-/api/learning/**  → learning-service
+http://localhost:8182
 ```
 
-The final route style will be decided during API Gateway implementation.
+the Gateway resolves services dynamically through Eureka:
+
+```text
+lb://authentication-service
+lb://learning-service
+```
+
+---
+
+## Architecture
+
+```text
+                    Client
+                       │
+                       ▼
+                API Gateway :8765
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+        ▼                             ▼
+Authentication Service          Learning Service
+      /auth/**             /courses/**  /modules/**
+```
+
+---
+
+## Service Discovery Flow
+
+```text
+Client
+    │
+    ▼
+API Gateway
+    │
+    │ asks Eureka:
+    │ "Where is learning-service?"
+    ▼
+Eureka Server
+    │
+    │ localhost:8081
+    ▼
+Learning Service
+```
+
+The Gateway never knows the physical address of the services.
+
+It only knows their logical service names.
 
 ---
 
 ## JWT Propagation
 
-The API Gateway will not generate JWT tokens.
+API Gateway does not generate JWT tokens.
 
-The API Gateway will receive client requests containing:
-
-```http
-Authorization: Bearer <token>
-```
-
-The gateway must forward this header to downstream services.
-
-Current target behavior:
+It simply forwards the Authorization header to downstream services.
 
 ```text
 Client
-        │
-        │ Authorization: Bearer <token>
-        ▼
+    │
+    │ Authorization: Bearer <JWT>
+    ▼
 API Gateway
-        │
-        │ forwards Authorization header
-        ▼
+    │
+    │ Header propagated unchanged
+    ▼
 Learning Service
-        │
-        │ validates JWT locally
-        ▼
-Protected endpoint
+    │
+JwtAuthenticationFilter
+    │
+SecurityContext
+    │
+@PreAuthorize
+    │
+Controller
 ```
 
-Learning Service remains responsible for validating JWT tokens and applying role-based authorization.
+JWT validation remains inside the Learning Service.
 
 ---
 
-## Responsibilities
+## Security Responsibilities
 
-Current responsibilities:
+Authentication Service
 
-* Register itself in Eureka
-* Provide the routing layer
+* User authentication
+* JWT generation
 
-Future responsibilities:
-
-* Route authentication requests to Authentication Service
-* Route learning requests to Learning Service
-* Forward Authorization headers
-* Hide internal service ports from external clients
-* Prepare for centralized cross-cutting concerns such as logging, rate limiting, CORS and security policies
-
----
-
-## Out of Scope For Now
-
-The following topics are not part of the immediate next step:
-
-* Centralized JWT validation inside the Gateway
-* Token generation
-* User registration
-* User login logic
-* Database access
-* Business logic
-* Token refresh
-* Token revocation
-
-These responsibilities remain inside Authentication Service or downstream services.
-
----
-
-## Next Implementation Goal
-
-Configure API Gateway as the single entry point.
-
-Target architecture:
-
-```text
-Client
-        │
-        ▼
 API Gateway
-        │
-        ├── /auth/**    → Authentication Service
-        └── /courses/** → Learning Service
-```
 
-Main objectives:
+* Request routing
+* Header forwarding
 
-* Configure Spring Cloud Gateway routes
-* Verify routing through Eureka service names
-* Test login through Gateway
-* Test Learning Service protected endpoints through Gateway
-* Verify that Authorization header is propagated correctly
-* Keep JWT validation inside Learning Service for now
+Learning Service
+
+* JWT validation
+* Authorization
+* Method Security
+
+This separation keeps responsibilities isolated and makes the architecture easier to evolve.
 
 ---
 
-## Current Status Label
+## Verified
+
+Verified through Postman:
+
+Authentication
+
+* User registration through Gateway
+* User login through Gateway
+* JWT generation
+
+Learning Service
+
+* Course endpoints
+* Module endpoints
+
+Security
+
+* JWT propagation
+* Unauthorized requests
+* USER permissions
+* ADMIN permissions
+* Role-based authorization
+
+Infrastructure
+
+* Eureka Service Discovery
+* Dynamic routing through `lb://`
+* End-to-end communication
+
+---
+
+## Current Status
 
 ```text
-API GATEWAY BASE SETUP COMPLETED
+API GATEWAY ROUTING COMPLETED
 ```
 
 Ready for:
 
-* Route configuration
-* Authentication Service routing
-* Learning Service routing
-* Authorization header forwarding verification
+* Global Filters
+* Logging
+* Rate Limiting
+* Circuit Breaker
+* Centralized Gateway Security

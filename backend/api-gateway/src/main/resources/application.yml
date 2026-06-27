@@ -1,0 +1,45 @@
+# Application name registered in Eureka
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # API Gateway routes
+          # Each route maps an incoming request to a downstream microservice.
+          # The 'lb://' protocol uses Eureka Service Discovery to resolve
+          # the target service instance dynamically.
+          routes:
+            # Route all authentication requests to Authentication Service
+            - id: authentication-service
+              uri: lb://authentication-service
+              predicates:
+                - Path=/auth/**
+
+            # Route all course requests to Learning Service
+            - id: learning-service-courses
+              uri: lb://learning-service
+              predicates:
+                - Path=/courses/**
+
+            # Route all module requests to Learning Service
+            - id: learning-service-modules
+              uri: lb://learning-service
+              predicates:
+                - Path=/modules/**
+
+# API Gateway port
+server:
+  port: 8765
+
+# Eureka Server address
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
