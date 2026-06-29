@@ -1,7 +1,8 @@
-package com.narcis.devpath.learningservice.entity;
+package com.narcis.devpath.noteservice.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,15 +10,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Course {
+public class Note {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,29 +27,31 @@ public class Course {
     @Size(max = 100, message = "Title cannot exceed 100 characters")
     private String title;
 
-
-    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
+    @NotBlank
+    @Size(max = 5000, message = "Description cannot exceed 5000 characters")
     private String description;
 
-    @NotBlank(message = "Difficulty is required")
-    @Size(max = 50, message = "Difficulty cannot exceed 50 characters")
-    private String difficulty;
+    @NotNull
+    private Long moduleId;
+
+    @Size(max = 100, message = "Title cannot exceed 100 characters")
+    private String moduleTitleSnapshot;
+
+    @NotBlank
+    private String ownerId;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Module> modules = new ArrayList<>();
-
     @PrePersist
-    void onCreate() {
+    void onCreate(){
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    void onUpdate() {
+    void onUpdate(){
         this.updatedAt = LocalDateTime.now();
     }
 }
