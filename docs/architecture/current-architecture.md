@@ -76,6 +76,7 @@ Responsibilities
 * Service Registration
 * Dynamic service lookup
 
+
 Status
 
 * Running
@@ -103,17 +104,16 @@ Responsibilities
 * Single external entry point
 * Dynamic routing
 * Service Discovery
-* HTTP request forwarding
-* Authorization header propagation
-* Hide internal service addresses
+* Request forwarding
+* Request tracing
 
 Implemented
 
-* Eureka Registration
-* Dynamic Route Configuration
-* Authentication Service routing
-* Learning Service routing
-* JWT header propagation
+* CorrelationIdGlobalFilter
+* Correlation ID generation
+* Correlation ID propagation
+* Request logging
+* Response logging
 
 Configured Routes
 
@@ -380,15 +380,71 @@ Completed
 * Service Discovery
 * JWT Header Propagation
 * End-to-End Routing Verification
+* Correlation ID Generation
+* Centralized Request Tracing
+* Request/Response Logging
 
 ---
 
 ## Next Planned Improvements
-
-* Gateway Global Filters
-* Logging
+* CORS
 * Rate Limiting
 * Circuit Breaker
 * Pagination
 * Search
 * Note Service
+
+# Observability
+
+DevPath implements a lightweight request tracing strategy based on Correlation IDs.
+
+The API Gateway generates a unique `X-Correlation-Id` when one is not provided by the client.
+
+The identifier is propagated unchanged across downstream services and included in every request and response log.
+
+This makes it possible to trace a single request across the distributed architecture.
+
+
+```text
+                 Client
+                    │
+                    ▼
+              API Gateway
+      CorrelationIdGlobalFilter
+                    │
+            X-Correlation-Id
+                    │
+        ┌───────────┴───────────┐
+        ▼                       ▼
+Authentication Service   Learning Service
+CorrelationIdFilter      CorrelationIdFilter
+        │                       │
+        ▼                       ▼
+      Logs                    Logs
+```
+
+
+# Request Tracing Flow
+```text
+
+Client
+    │
+    │ GET /courses
+    ▼
+API Gateway
+    │
+    │ Generates Correlation ID if missing
+    │ Logs incoming request
+    ▼
+Learning Service
+    │
+    │ Logs incoming request
+    │ Processes business logic
+    │ Logs response
+    ▼
+API Gateway
+    │
+    │ Logs outgoing response
+    ▼
+Client
+```
