@@ -28,6 +28,7 @@ Current implementation includes:
 * Stateless authentication
 * Role-based authorization
 * Method security with @PreAuthorize
+* Correlation ID request tracing
 
 ---
 
@@ -51,6 +52,7 @@ Learning Service validates the JWT locally and uses the role claim to authorize 
 * JwtAuthenticationFilter
 * JwtService
 * JwtServiceImpl
+* CorrelationIdLoggingFilter
 
 ### Responsibilities
 
@@ -116,9 +118,44 @@ Learning Service does:
 
 ---
 
-## API Gateway Preparation
+## Correlation ID Propagation
 
-The next architecture step is to route Learning Service requests through API Gateway.
+Learning Service participates in DevPath's distributed request tracing strategy.
+
+The service does not generate Correlation IDs.
+
+Instead, it receives the `X-Correlation-Id` header propagated by the API Gateway and uses it to log incoming requests and outgoing responses.
+
+This allows requests to be traced consistently across the Gateway and downstream services.
+
+```text
+Client
+    │
+    ▼
+API Gateway
+    │
+X-Correlation-Id
+    │
+    ▼
+Learning Service
+    │
+CorrelationIdLoggingFilter
+    │
+    ▼
+Application Logs
+```
+
+
+
+## ## API Gateway Integration
+
+Learning Service is accessed through the API Gateway.
+
+The Gateway forwards both the `Authorization` header and the
+`X-Correlation-Id` header without modifying them.
+
+Learning Service validates JWT tokens locally while using the propagated
+Correlation ID for request tracing.
 
 Current direct access:
 
@@ -191,6 +228,10 @@ Verified successfully:
 * Method security with @PreAuthorize
 * JWT issued by Authentication Service is accepted by Learning Service
 * Authorization header propagation verified manually with Postman
+* Correlation ID propagation
+* Request logging
+* Response logging
+* End-to-end request tracing
 
 ---
 
@@ -201,7 +242,6 @@ Verified successfully:
 * Advanced filtering
 * Test coverage reporting
 * CI pipeline test execution
-* API Gateway integration as single entry point
 
 ---
 
@@ -235,16 +275,28 @@ Implemented features:
 * Method Security
 * Role-based Authorization
 * JWT validation of tokens issued by Authentication Service
+* Correlation ID Logging
+* Request Tracing
 
 Status:
 
 ```text
-LEARNING SERVICE SECURITY COMPLETED
+LEARNING SERVICE COMPLETED
 ```
 
 Ready for:
 
-* API Gateway integration
-* Pagination and Sorting
-* Search Capabilities
-* Note Service
+Pagination and Sorting
+Search Capabilities
+Note Service
+
+
+## Architecture Decisions
+
+Current architectural decisions:
+
+* Learning Service acts as a JWT Resource Server.
+* User authentication is delegated to Authentication Service.
+* JWT validation is performed locally.
+* Correlation IDs are propagated by the API Gateway and never generated locally.
+* Authorization is enforced using Spring Security and `@PreAuthorize`.

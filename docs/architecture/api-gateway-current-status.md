@@ -18,15 +18,17 @@ Current responsibilities:
 * Route client requests to downstream services
 * Resolve service instances through Eureka
 * Forward HTTP requests transparently
-* Preserve request headers, including `Authorization`
+* Preserve request headers
+* Generate Correlation IDs
+* Propagate Correlation IDs
+* Log incoming requests
+* Log outgoing responses
 
 Future responsibilities:
 
-* Logging
 * CORS centralization
 * Rate Limiting
 * Circuit Breaker
-* Request filtering
 * Centralized security policies
 
 ---
@@ -146,6 +148,33 @@ JWT validation remains inside the Learning Service.
 
 ---
 
+## Correlation ID Propagation
+API Gateway is responsible for generating and propagating
+Correlation IDs across all downstream services.
+
+If an incoming request already contains an
+`X-Correlation-Id` header, the Gateway preserves it.
+
+Otherwise, the Gateway generates a new UUID and propagates
+it unchanged to every downstream service.
+
+The same identifier is also returned to the client through
+the response headers.
+
+```text
+
+Client
+   │
+   │ GET /courses
+   ▼
+API Gateway
+   │
+   │ X-Correlation-Id generated if absent
+   ▼
+Learning Service
+```
+
+
 ## Security Responsibilities
 
 Authentication Service
@@ -156,7 +185,9 @@ Authentication Service
 API Gateway
 
 * Request routing
-* Header forwarding
+* Authorization header forwarding
+* Correlation ID generation
+* Correlation ID propagation
 
 Learning Service
 
@@ -167,6 +198,22 @@ Learning Service
 This separation keeps responsibilities isolated and makes the architecture easier to evolve.
 
 ---
+
+## Gateway Global Filters
+Implemented Global Filter
+
+CorrelationIdGlobalFilter
+
+Responsibilities
+
+* Generate Correlation IDs
+* Propagate Correlation IDs
+* Add Correlation ID to responses
+* Log incoming requests
+* Log outgoing responses
+
+---
+
 
 ## Verified
 
@@ -196,19 +243,35 @@ Infrastructure
 * Eureka Service Discovery
 * Dynamic routing through `lb://`
 * End-to-end communication
+* Correlation ID generation
+* Correlation ID propagation
+* Gateway request logging
+* Gateway response logging
+* End-to-end request tracing
 
 ---
 
 ## Current Status
 
 ```text
-API GATEWAY ROUTING COMPLETED
+API GATEWAY FOUNDATION COMPLETED
 ```
 
 Ready for:
 
-* Global Filters
-* Logging
+* CORS
 * Rate Limiting
 * Circuit Breaker
 * Centralized Gateway Security
+
+---
+
+## Architectural Decisions
+Current architectural decisions
+
+* API Gateway remains stateless.
+* JWT validation is delegated to downstream services.
+* Correlation IDs are generated only at the Gateway.
+* Downstream services never generate new Correlation IDs.
+* Every request is traceable across the distributed architecture.
+

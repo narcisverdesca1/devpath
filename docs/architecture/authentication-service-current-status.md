@@ -19,6 +19,7 @@ Current implementation includes:
 * Custom UserDetails implementation
 * Stateless authentication
 * Role-based authorization
+* Correlation ID request tracing
 
 Authentication Service is the only service responsible for validating user credentials.
 
@@ -88,6 +89,7 @@ Components:
 * UserDetailsImpl
 * AuthenticationManager
 * PasswordEncoder (BCrypt)
+* CorrelationIdLoggingFilter
 
 Responsibilities:
 
@@ -194,6 +196,34 @@ Protected endpoint access
 
 ---
 
+## Currelation ID Propagation
+Authentication Service participates in the distributed request tracing strategy implemented by DevPath.
+
+The service does not generate Correlation IDs.
+
+Instead, it receives the `X-Correlation-Id` header from the API Gateway and uses it to log incoming requests and outgoing responses.
+
+This allows a single client request to be traced across multiple microservices.
+
+```text
+Client
+    │
+    ▼
+API Gateway
+    │
+X-Correlation-Id
+    │
+    ▼
+Authentication Service
+    │
+CorrelationIdLoggingFilter
+    │
+    ▼
+Application Logs
+```
+
+---
+
 ## Integration With Learning Service
 
 Learning Service does not authenticate users with email and password.
@@ -256,6 +286,11 @@ Verified successfully:
 * Stateless authentication
 * Role claim generation
 * JWT usage by Learning Service
+* Correlation ID propagation
+* Request logging
+* Response logging
+* End-to-end request tracing through API Gateway
+
 
 ---
 
@@ -264,7 +299,6 @@ Verified successfully:
 * JWT unit tests
 * Controller tests
 * Refresh tokens
-* API Gateway JWT propagation
 * Secret externalization through environment variables
 * Token revocation strategy
 * Asymmetric JWT signing with private/public key pair
@@ -288,16 +322,25 @@ Implemented features:
 * Global Exception Handling
 * Validation Layer
 * JWT Issuer for Learning Service
+* Correlation ID Logging
+* Request Tracing
 
 Status:
 
 ```text
-JWT AUTHENTICATION COMPLETED
+AUTHENTICATION SERVICE COMPLETED
 ```
 
 Ready for:
 
-* API Gateway Integration
-* JWT propagation through API Gateway
 * Authentication Tests
 * Refresh Token Strategy
+
+## Architecture Decisions
+
+Current architectural decisions:
+
+* Authentication Service is the only JWT issuer in the platform.
+* User credentials are validated only by Authentication Service.
+* Correlation IDs are received from the API Gateway and never generated locally.
+* Authentication remains centralized while resource services remain stateless.
