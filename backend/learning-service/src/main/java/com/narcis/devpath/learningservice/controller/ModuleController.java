@@ -2,6 +2,7 @@ package com.narcis.devpath.learningservice.controller;
 
 import com.narcis.devpath.learningservice.dto.ModuleRequestDto;
 import com.narcis.devpath.learningservice.dto.ModuleResponseDto;
+import com.narcis.devpath.learningservice.dto.ModuleSummaryDto;
 import com.narcis.devpath.learningservice.exception.ApiError;
 import com.narcis.devpath.learningservice.service.ModuleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -102,5 +103,11 @@ public class ModuleController {
     })
     public void deleteModule(@PathVariable Long id) {
         moduleService.deleteModuleById(id);
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/modules/{moduleId}/feign")
+    public ModuleSummaryDto getModuleTitleFeign(@PathVariable Long moduleId) {
+        return moduleService.getModuleSummary(moduleId);
     }
 }

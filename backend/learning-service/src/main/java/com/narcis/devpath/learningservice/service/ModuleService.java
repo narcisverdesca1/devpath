@@ -2,6 +2,7 @@ package com.narcis.devpath.learningservice.service;
 
 import com.narcis.devpath.learningservice.dto.ModuleRequestDto;
 import com.narcis.devpath.learningservice.dto.ModuleResponseDto;
+import com.narcis.devpath.learningservice.dto.ModuleSummaryDto;
 import com.narcis.devpath.learningservice.entity.Course;
 import com.narcis.devpath.learningservice.exception.ResourceNotFoundException;
 import com.narcis.devpath.learningservice.mapper.ModuleRequestMapper;
@@ -68,5 +69,13 @@ public class ModuleService {
     public void deleteModuleById(Long id){
         moduleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Module not found with id: " + id));
         moduleRepository.deleteById(id);
+    }
+
+    public ModuleSummaryDto getModuleSummary(Long moduleId) {
+
+        Module module = moduleRepository.findById(moduleId)
+                .orElseThrow(()-> new ResourceNotFoundException("Module not found with id: " + moduleId));
+
+        return ModuleSummaryDto.builder().id(module.getId()).title(module.getTitle()) .build();
     }
 }

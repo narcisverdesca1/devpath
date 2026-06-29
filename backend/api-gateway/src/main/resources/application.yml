@@ -30,6 +30,12 @@ spring:
               predicates:
                 - Path=/modules/**
 
+            # Route all note requests to Learning Service
+            - id: note-service
+              uri: lb://note-service
+              predicates:
+                - Path=/notes/**
+
 # API Gateway port
 server:
   port: 8765
