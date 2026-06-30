@@ -19,6 +19,7 @@ Current responsibilities:
 * Resolve service instances through Eureka
 * Forward HTTP requests transparently
 * Preserve request headers
+* Forward Authorization headers
 * Generate Correlation IDs
 * Propagate Correlation IDs
 * Log incoming requests
@@ -58,6 +59,7 @@ Implemented routes:
 /auth/**               → authentication-service
 /courses/**            → learning-service
 /modules/**            → learning-service
+/notes/**              → note-service
 ```
 
 Routing uses Service Discovery.
@@ -65,7 +67,9 @@ Routing uses Service Discovery.
 Instead of using fixed URLs:
 
 ```text
-http://localhost:8182
+http://localhost:8081
+http://localhost:8082
+http://localhost:8083
 ```
 
 the Gateway resolves services dynamically through Eureka:
@@ -73,6 +77,7 @@ the Gateway resolves services dynamically through Eureka:
 ```text
 lb://authentication-service
 lb://learning-service
+lb://note-service
 ```
 
 ---
@@ -80,16 +85,16 @@ lb://learning-service
 ## Architecture
 
 ```text
-                    Client
-                       │
-                       ▼
-                API Gateway :8765
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-        ▼                             ▼
-Authentication Service          Learning Service
-      /auth/**             /courses/**  /modules/**
+                           Client
+                              │
+                              ▼
+                     API Gateway :8765
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+Authentication Service   Learning Service      Note Service
+      /auth/**      /courses/** /modules/**      /notes/**
 ```
 
 ---
@@ -103,13 +108,13 @@ Client
 API Gateway
     │
     │ asks Eureka:
-    │ "Where is learning-service?"
+    │ "Where is note-service?"
     ▼
 Eureka Server
     │
-    │ localhost:8081
+    │ localhost:8083
     ▼
-Learning Service
+Note Service
 ```
 
 The Gateway never knows the physical address of the services.
@@ -120,9 +125,9 @@ It only knows their logical service names.
 
 ## JWT Propagation
 
-API Gateway does not generate JWT tokens.
+API Gateway does not generate or validate JWT tokens.
 
-It simply forwards the Authorization header to downstream services.
+It simply forwards the `Authorization` header to downstream services.
 
 ```text
 Client
@@ -131,80 +136,84 @@ Client
     ▼
 API Gateway
     │
-    │ Header propagated unchanged
+    │ Authorization header forwarded
+    ▼
+Note Service
+    │
+    │ OpenFeign RequestInterceptor
     ▼
 Learning Service
-    │
-JwtAuthenticationFilter
-    │
-SecurityContext
-    │
-@PreAuthorize
-    │
-Controller
 ```
 
-JWT validation remains inside the Learning Service.
+JWT validation remains the responsibility of each microservice, allowing every service to remain autonomous and independently secure.
 
 ---
 
 ## Correlation ID Propagation
-API Gateway is responsible for generating and propagating
-Correlation IDs across all downstream services.
 
-If an incoming request already contains an
-`X-Correlation-Id` header, the Gateway preserves it.
+API Gateway is responsible for generating and propagating Correlation IDs across the distributed system.
 
-Otherwise, the Gateway generates a new UUID and propagates
-it unchanged to every downstream service.
+If an incoming request already contains an `X-Correlation-Id` header, the Gateway preserves it.
 
-The same identifier is also returned to the client through
-the response headers.
+Otherwise, the Gateway generates a new UUID and propagates it unchanged to every downstream service.
+
+The same identifier is returned to the client through the response headers.
 
 ```text
-
 Client
    │
-   │ GET /courses
+   │ GET /notes
    ▼
 API Gateway
    │
    │ X-Correlation-Id generated if absent
    ▼
+Note Service
+   │
+   ▼
 Learning Service
 ```
 
+---
 
 ## Security Responsibilities
 
-Authentication Service
+### Authentication Service
 
 * User authentication
 * JWT generation
 
-API Gateway
+### API Gateway
 
 * Request routing
 * Authorization header forwarding
 * Correlation ID generation
 * Correlation ID propagation
 
-Learning Service
+### Learning Service
 
 * JWT validation
 * Authorization
 * Method Security
 
-This separation keeps responsibilities isolated and makes the architecture easier to evolve.
+### Note Service
+
+* JWT validation
+* Authorization
+* Method Security
+* Secure communication with Learning Service through OpenFeign
+
+This separation keeps responsibilities isolated and allows every microservice to enforce its own security independently.
 
 ---
 
 ## Gateway Global Filters
-Implemented Global Filter
 
-CorrelationIdGlobalFilter
+Implemented Global Filter:
 
-Responsibilities
+**CorrelationIdGlobalFilter**
+
+Responsibilities:
 
 * Generate Correlation IDs
 * Propagate Correlation IDs
@@ -214,23 +223,28 @@ Responsibilities
 
 ---
 
-
 ## Verified
 
 Verified through Postman:
 
-Authentication
+### Authentication
 
 * User registration through Gateway
 * User login through Gateway
 * JWT generation
 
-Learning Service
+### Learning Service
 
 * Course endpoints
 * Module endpoints
 
-Security
+### Note Service
+
+* Note CRUD endpoints
+* Module validation through OpenFeign
+* JWT propagation through RequestInterceptor
+
+### Security
 
 * JWT propagation
 * Unauthorized requests
@@ -238,7 +252,7 @@ Security
 * ADMIN permissions
 * Role-based authorization
 
-Infrastructure
+### Infrastructure
 
 * Eureka Service Discovery
 * Dynamic routing through `lb://`
@@ -259,7 +273,7 @@ API GATEWAY FOUNDATION COMPLETED
 
 Ready for:
 
-* CORS
+* CORS centralization
 * Rate Limiting
 * Circuit Breaker
 * Centralized Gateway Security
@@ -267,11 +281,13 @@ Ready for:
 ---
 
 ## Architectural Decisions
-Current architectural decisions
+
+Current architectural decisions:
 
 * API Gateway remains stateless.
 * JWT validation is delegated to downstream services.
+* Authorization headers are transparently forwarded.
 * Correlation IDs are generated only at the Gateway.
 * Downstream services never generate new Correlation IDs.
+* Service discovery relies exclusively on Eureka (`lb://`).
 * Every request is traceable across the distributed architecture.
-

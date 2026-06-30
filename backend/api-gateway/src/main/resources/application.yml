@@ -30,12 +30,41 @@ spring:
               predicates:
                 - Path=/modules/**
 
-            # Route all note requests to Learning Service
+            # Route all note requests to Note Service
             - id: note-service
               uri: lb://note-service
               predicates:
                 - Path=/notes/**
 
+        # ==========================================================
+        # Global CORS Configuration
+        #
+        # All frontend requests must pass through the API Gateway.
+        # Downstream microservices should NOT define their own CORS policies.
+        #
+        # Development:
+        #   http://localhost:5173
+        #
+        # Production:
+        #   Replace the localhost origin with the deployed frontend URL.
+        #   Example:
+        #   https://devpath.app
+        # ==========================================================
+        globalcors:
+          cors-configurations:
+            "[/**]":
+              allowedOrigins:
+                - http://localhost:5173
+              allowedMethods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - OPTIONS
+              allowedHeaders:
+                - "*"
+              allowCredentials: true
 # API Gateway port
 server:
   port: 8765
@@ -49,3 +78,4 @@ eureka:
     hostname: localhost
     prefer-ip-address: false
     instance-id: ${spring.application.name}:${server.port}
+
