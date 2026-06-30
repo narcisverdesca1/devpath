@@ -39,7 +39,7 @@ Databases:
         │                       │                        │
         ▼                       ▼                        ▼
    API Gateway        Authentication Service     Learning Service
-   localhost:8765        localhost:8182           localhost:8081
+   localhost:8765        localhost:8182           localhost:8181
         │                       │                        │
         │                       └──────────────┐         │
         │                                      │         │
@@ -197,7 +197,7 @@ Status
 Port
 
 ```text
-8081
+8181
 ```
 
 Technology
